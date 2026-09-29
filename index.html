@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AS Servers | Asia Minecraft PvP Server List</title>
+<meta name="description" content="1.9+ Asia Minecraft PvP servers. Duels, FFA and sandbox with Swords, Crystals, Netherite, Boxing and more.">
+<meta property="og:title" content="AS Servers | Asia Minecraft PvP Server List">
+<meta property="og:description" content="Find low-ping Asia Minecraft PvP servers. Click an IP to copy it.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%235fa83a'/><rect y='5' width='16' height='11' fill='%238a5a33'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --deepslate:#1a1d22; --stone:#262a31; --stone-hi:#323843; --line:#3b424e;
+  --grass:#5fa83a; --grass-dk:#3f7a24; --gold:#f0c24b; --text:#e9ecef; --muted:#9aa3af;
+  --no:#c2585a; --diamond:#4fd6d0;
+  --px:'Press Start 2P',ui-monospace,monospace; --body:'Figtree',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{background:var(--deepslate);color:var(--text);font:400 16px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--diamond);outline-offset:2px}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+
+/* hero: grass strip on top, like the top layer of a world */
+.grass{height:14px;background:
+  linear-gradient(var(--grass) 0 8px,var(--grass-dk) 8px 14px)}
+header.hero{padding:72px 0 48px;border-bottom:4px solid #000}
+.hero h1{font:400 clamp(28px,6vw,52px)/1.25 var(--px);letter-spacing:.02em;text-shadow:4px 4px 0 #000}
+.hero h1 em{font-style:normal;color:var(--gold)}
+.hero p{max-width:52ch;margin:24px 0 32px;color:var(--muted);font-size:18px}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px}
+.btn{font:700 15px var(--body);text-decoration:none;padding:12px 20px;border:3px solid #000;
+  background:var(--grass);color:#fff;box-shadow:inset -3px -3px 0 var(--grass-dk),inset 3px 3px 0 #7fc457;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn.alt{background:var(--stone-hi);box-shadow:inset -3px -3px 0 #1f232a,inset 3px 3px 0 #4a5260}
+.stats{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:36px;color:var(--muted);font-size:15px}
+.stats b{color:var(--text)}
+
+/* toolbar */
+.bar{position:sticky;top:0;z-index:5;background:var(--deepslate);border-bottom:2px solid var(--line);padding:14px 0}
+.bar .wrap{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{font:500 14px var(--body);color:var(--muted);background:var(--stone);border:2px solid var(--line);padding:7px 14px;cursor:pointer}
+.tab[aria-pressed=true]{color:#fff;border-color:var(--grass);background:var(--stone-hi)}
+.tools{display:flex;gap:10px;flex-wrap:wrap}
+input[type=search],select{font:400 14px var(--body);color:var(--text);background:#111317;border:2px solid var(--line);padding:8px 12px;min-width:0}
+input[type=search]{width:220px}
+
+/* server list */
+main{padding:32px 0 8px}
+h2{font:400 16px/1.4 var(--px);margin:40px 0 6px}
+h2:first-child{margin-top:0}
+.sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+.list{display:grid;gap:8px;list-style:none;padding:0}
+.srv{display:grid;grid-template-columns:52px 1fr auto;gap:16px;align-items:center;
+  background:var(--stone);border:2px solid var(--line);padding:10px 14px 10px 10px}
+.srv:hover{border-color:#fff}
+.icon{width:52px;height:52px;display:grid;place-items:center;border:2px solid #000;font:400 16px var(--px);color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.6)}
+.top{border-color:var(--gold)}
+.ip{font:700 17px var(--body);background:none;border:0;color:var(--text);cursor:pointer;padding:0;text-align:left;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ip:hover{color:var(--diamond)}
+.star{color:var(--gold);font-size:15px}
+.copied{font:500 12px var(--body);color:#0e1a0a;background:var(--grass);padding:1px 8px}
+.meta{display:flex;gap:6px 14px;flex-wrap:wrap;color:var(--muted);font-size:13.5px;margin-top:2px}
+.modes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.chip{font:500 12.5px var(--body);padding:3px 9px;border:2px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.y{color:#bfe8a6;border-color:var(--grass-dk);background:rgba(95,168,58,.12)}
+.chip.l{color:var(--gold);border-color:#8a6d22;background:rgba(240,194,75,.1)}
+.chip.n{opacity:.45;text-decoration:line-through}
+.chip.u{opacity:.6}
+.status{display:inline-flex;align-items:center;gap:6px}
+.dot{width:9px;height:9px;background:var(--muted)}
+.dot.on{background:var(--grass)}.dot.off{background:var(--no)}
+.empty{padding:32px;text-align:center;color:var(--muted);border:2px dashed var(--line)}
+
+/* footer sections */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;padding:32px 0 56px}
+.card{background:var(--stone);border:2px solid var(--line);padding:22px}
+.card h3{font:400 13px/1.5 var(--px);margin-bottom:10px}
+.card p{color:var(--muted);font-size:15px;margin-bottom:16px}
+footer{border-top:4px solid #000;padding:24px 0 40px;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+footer a{color:var(--text)}
+
+@media (max-width:640px){
+  header.hero{padding:48px 0 36px}
+  .srv{grid-template-columns:44px 1fr;gap:12px}
+  .icon{width:44px;height:44px;font-size:13px}
+  .modes{grid-column:1/-1;justify-content:flex-start}
+  input[type=search]{width:100%}.tools{width:100%}select{flex:1}
+}
+</style>
+</head>
+<body>
+<div class="grass" aria-hidden="true"></div>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Asia <em>PvP</em><br>server list</h1>
+    <p>Low-ping 1.9+ practice servers across Asia. Duels, free-for-all and sandbox with Swords, Crystals, Netherite, Boxing and more.</p>
+    <div class="cta">
+      <a class="btn" href="#servers">Browse servers</a>
+      <a class="btn alt" href="https://discord.gg/TTAgYjXmkh" target="_blank" rel="noopener">Join Discord</a>
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<div class="bar" id="servers">
+  <div class="wrap">
+    <div class="tabs" role="group" aria-label="Filter by game mode" id="tabs">
+      <button class="tab" data-mode="all" aria-pressed="true">All</button>
+      <button class="tab" data-mode="duels" aria-pressed="false">Duels</button>
+      <button class="tab" data-mode="ffa" aria-pressed="false">FFA</button>
+      <button class="tab" data-mode="sandbox" aria-pressed="false">Sandbox</button>
+    </div>
+    <div class="tools">
+      <input type="search" id="q" placeholder="Search servers" aria-label="Search servers">
+      <select id="region" aria-label="Filter by region">
+        <option value="all">All regions</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<main class="wrap" id="out"></main>
+
+<section class="wrap" aria-label="Get involved">
+  <div class="cards">
+    <div class="card">
+      <h3>Suggest a server</h3>
+      <p>Know a good Asia PvP server that is missing? Open a pull request and add it to the list.</p>
+      <a class="btn" href="https://github.com/itzyongan/asia-pvp-servers" target="_blank" rel="noopener">Open GitHub repo</a>
+    </div>
+    <div class="card">
+      <h3>Need help?</h3>
+      <p>Questions, broken IPs or server ideas? Ask in the Discord community.</p>
+      <a class="btn alt" href="https://discord.gg/TTAgYjXmkh" target="_blank" rel="noopener">Join Discord</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Made by <a href="https://linktr.ee/itzyongan" target="_blank" rel="noopener">itzyongan</a>. Not affiliated with Mojang or Microsoft.</span>
+    <span>Player counts come from <a href="https://mcsrvstat.us" target="_blank" rel="noopener">mcsrvstat.us</a>.</span>
+  </div>
+</footer>
+
+<script>
+// ✅ = true, ❌ = false, ❔ = "l" (limited), unknown = null
+const FLAG = {SG:"🇸🇬", KR:"🇰🇷", IN:"🇮🇳"};
+const REGION = {SG:"Singapore", KR:"South Korea", IN:"India"};
+const S = [
+  // ip, region, duels, ffa, sandbox, note, top
+  ["premium","as.catpvp.xyz","SG",1,0,1,"",1],
+  ["premium","as.mcpvp.club","SG",1,0,0,"",1],
+  ["premium","as.minemen.club","SG",1,"l",0,"Sword FFA only",1],
+  ["premium","as.stray.gg","SG",0,1,1,"",1],
+  ["premium","as.meowmc.fun","SG",1,0,0,""],
+  ["premium","as.metalmc.vip","SG",1,1,null,""],
+  ["premium","as.strikemc.net","SG",1,1,null,""],
+  ["premium","as.xylon.gg","SG",0,1,0,""],
+  ["premium","asiaprac.xyz","SG",0,0,1,""],
+  ["premium","play.pvphq.com","SG",1,null,null,""],
+  ["premium","pvpconnect.xyz","KR",1,1,0,""],
+  ["premium","xyrismc.fun","IN",1,0,0,""],
+  ["cracked","as.acentramc.com","SG",1,1,0,""],
+  ["cracked","as.chickencraft.nl","SG",1,1,1,""],
+  ["cracked","fusion-network.xyz","SG",0,1,0,""],
+  ["cracked","gamertee.net","SG",1,1,0,""],
+  ["cracked","mazerclub.net","SG",1,1,1,""],
+  ["cracked","minesive.com","SG",1,1,1,""],
+  ["cracked","play.swiftsmp.com","SG",0,1,1,""],
+  ["cracked","staticpvp.fun","SG",1,1,0,""]
+].map(a=>({type:a[0],ip:a[1],region:a[2],duels:a[3],ffa:a[4],sandbox:a[5],note:a[6],top:!!a[7]}));
+
+const $ = s => document.querySelector(s);
+const state = {mode:"all", q:"", region:"all", status:{}};
+
+// stats + region select
+const regions = [...new Set(S.map(s=>s.region))];
+regions.forEach(r=>$("#region").insertAdjacentHTML("beforeend",`<option value="${r}">${FLAG[r]} ${REGION[r]}</option>`));
+$("#stats").innerHTML = `<span><b>${S.length}</b> servers</span><span><b>${S.filter(s=>s.top).length}</b> top picks</span><span><b>${regions.length}</b> regions</span><span id="online"></span>`;
+
+const hue = ip => [...ip].reduce((h,c)=>h*31+c.charCodeAt(0)|0,7);
+const chip = (label,v) => {
+  const c = v===1?"y":v==="l"?"l":v===0?"n":"u";
+  const t = v===1?"available":v==="l"?"limited":v===0?"unavailable":"unverified";
+  return `<span class="chip ${c}" title="${label}: ${t}">${label}${v==="l"?" (limited)":""}${v===null?" ?":""}</span>`;
+};
+
+function row(s){
+  const h = Math.abs(hue(s.ip))%360, st = state.status[s.ip];
+  const status = st===undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
+    : st.online ? `<span class="status"><span class="dot on"></span>${st.players} online</span>`
+    : `<span class="status"><span class="dot off"></span>Offline</span>`;
+  return `<li class="srv ${s.top?"top":""}">
+    <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${s.ip.replace(/^(as|play)\./,"")[0].toUpperCase()}</div>
+    <div>
+      <button class="ip" data-ip="${s.ip}" aria-label="Copy ${s.ip}">${s.top?'<span class="star" title="Top pick">★</span>':""}${s.ip}</button>
+      <div class="meta"><span>${FLAG[s.region]} ${REGION[s.region]}</span>${status}${s.note?`<span>${s.note}</span>`:""}</div>
+    </div>
+    <div class="modes">${chip("Duels",s.duels)}${chip("FFA",s.ffa)}${chip("Sandbox",s.sandbox)}</div>
+  </li>`;
+}
+
+function render(){
+  const q = state.q.trim().toLowerCase();
+  const f = S.filter(s =>
+    (state.mode==="all" || s[state.mode]===1 || s[state.mode]==="l") &&
+    (state.region==="all" || s.region===state.region) &&
+    (!q || s.ip.includes(q)));
+  const group = (type,title,sub) => {
+    const items = f.filter(s=>s.type===type).sort((a,b)=>b.top-a.top);
+    return items.length ? `<h2>${title}</h2><p class="sub">${sub}</p><ul class="list">${items.map(row).join("")}</ul>` : "";
+  };
+  $("#out").innerHTML = (group("premium","Premium servers","Require a paid Minecraft account.") +
+    group("cracked","Cracked servers","Also open to non-premium accounts.")) ||
+    `<div class="empty">No servers match your filters. Clear the search or pick another mode.</div>`;
+}
+
+// events
+$("#tabs").addEventListener("click", e => {
+  const b = e.target.closest(".tab"); if(!b) return;
+  state.mode = b.dataset.mode;
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-pressed", t===b));
+  render();
+});
+$("#q").addEventListener("input", e=>{state.q=e.target.value;render()});
+$("#region").addEventListener("change", e=>{state.region=e.target.value;render()});
+$("#out").addEventListener("click", async e => {
+  const b = e.target.closest(".ip"); if(!b) return;
+  try{ await navigator.clipboard.writeText(b.dataset.ip); }catch{ return; }
+  b.insertAdjacentHTML("beforeend",'<span class="copied">Copied</span>');
+  setTimeout(()=>b.querySelector(".copied")?.remove(),1400);
+});
+
+// live status (best effort; fails quietly)
+async function ping(s){
+  try{
+    const r = await fetch(`https://api.mcsrvstat.us/3/${s.ip}`);
+    const d = await r.json();
+    state.status[s.ip] = {online:!!d.online, players:d.players?.online ?? 0};
+  }catch{ state.status[s.ip] = {online:false, players:0, unknown:true}; }
+}
+render();
+Promise.all(S.map(ping)).then(()=>{
+  const on = S.filter(s=>state.status[s.ip]?.online);
+  const total = on.reduce((n,s)=>n+state.status[s.ip].players,0);
+  if(on.length) $("#online").innerHTML = `<b>${total}</b> players online now`;
+  render();
+});
+</script>
+</body>
+</html>
