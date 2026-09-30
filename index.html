@@ -96,7 +96,6 @@ footer a{color:var(--text)}
 </style>
 </head>
 <body>
-<!-- README-CONTENT-END -->
 <div class="grass" aria-hidden="true"></div>
 
 <header class="hero">
@@ -153,195 +152,62 @@ footer a{color:var(--text)}
 </footer>
 
 <script>
-// ✅ = true, ❌ = false, ❔ = "l" (limited), unknown = null
-const FLAG = {SG:"🇸🇬", KR:"🇰🇷", IN:"🇮🇳"};
-const REGION = {SG:"Singapore", KR:"South Korea", IN:"India"};
-const S = [
-  [
-    "premium",
-    "as.mcpvp.club",
-    "SG",
-    1,
-    0,
-    0,
-    "",
-    1
-  ],
-  [
-    "premium",
-    "as.minemen.club",
-    "SG",
-    1,
-    "l",
-    0,
-    "Sword FFA Only",
-    1
-  ],
-  [
-    "premium",
-    "as.stray.gg",
-    "SG",
-    0,
-    1,
-    1,
-    "",
-    1
-  ],
-  [
-    "premium",
-    "play.pvphq.com",
-    "SG",
-    1,
-    null,
-    null,
-    "",
-    1
-  ],
-  [
-    "premium",
-    "as.meowmc.fun",
-    "SG",
-    1,
-    0,
-    0,
-    ""
-  ],
-  [
-    "premium",
-    "as.metalmc.vip",
-    "SG",
-    1,
-    1,
-    null,
-    ""
-  ],
-  [
-    "premium",
-    "as.strikemc.net",
-    "SG",
-    1,
-    1,
-    null,
-    ""
-  ],
-  [
-    "premium",
-    "as.xylon.gg",
-    "SG",
-    0,
-    1,
-    0,
-    ""
-  ],
-  [
-    "premium",
-    "asiaprac.xyz",
-    "SG",
-    0,
-    0,
-    1,
-    ""
-  ],
-  [
-    "premium",
-    "pvpconnect.xyz",
-    "KR",
-    1,
-    1,
-    0,
-    ""
-  ],
-  [
-    "premium",
-    "xyrismc.fun",
-    "IN",
-    1,
-    0,
-    0,
-    ""
-  ],
-  [
-    "cracked",
-    "as.acentramc.com",
-    "SG",
-    1,
-    1,
-    0,
-    ""
-  ],
-  [
-    "cracked",
-    "as.chickencraft.nl",
-    "SG",
-    1,
-    1,
-    1,
-    ""
-  ],
-  [
-    "cracked",
-    "fusion-network.xyz",
-    "SG",
-    0,
-    1,
-    0,
-    ""
-  ],
-  [
-    "cracked",
-    "gamertee.net",
-    "SG",
-    1,
-    1,
-    0,
-    ""
-  ],
-  [
-    "cracked",
-    "mazerclub.net",
-    "SG",
-    1,
-    1,
-    1,
-    ""
-  ],
-  [
-    "cracked",
-    "minesive.com",
-    "SG",
-    1,
-    1,
-    1,
-    ""
-  ],
-  [
-    "cracked",
-    "play.swiftsmp.com",
-    "SG",
-    0,
-    1,
-    1,
-    ""
-  ],
-  [
-    "cracked",
-    "staticpvp.fun",
-    "SG",
-    1,
-    1,
-    0,
-    ""
-  ]
-].map(a=>({type:a[0],ip:a[1],region:a[2],duels:a[3],ffa:a[4],sandbox:a[5],note:a[6],top:!!a[7]}));
-
 const $ = s => document.querySelector(s);
 const state = {mode:"all", q:"", region:"all", status:{}};
+let S = [];
 
-// stats + region select
-const regions = [...new Set(S.map(s=>s.region))];
-regions.forEach(r=>$("#region").insertAdjacentHTML("beforeend",`<option value="${r}">${FLAG[r]} ${REGION[r]}</option>`));
-$("#stats").innerHTML = `<span><b>${S.length}</b> servers</span><span><b>${S.filter(s=>s.top).length}</b> top picks</span><span><b>${regions.length}</b> regions</span><span id="online"></span>`;
+// The server list is read straight from README.md, so there is no sync step to break.
+// Edit the README tables and commit: the site updates on the next deploy.
+const README_URLS = [
+  "/README.md",
+  "https://raw.githubusercontent.com/itzyongan/asia-pvp-servers/main/README.md"
+];
 
+// PARSE-START
+function parse(md){
+  const out = [];
+  let type = null;
+  const val = x => x.includes("✅") ? 1 : x.includes("❌") ? 0 : x.includes("❔") ? "l" : null;
+  for(const line of md.split(/\r?\n/)){
+    const h = line.match(/^#{1,6}\s+(.*)/);
+    if(h){
+      const t = h[1].toLowerCase();
+      type = t.includes("cracked") ? "cracked" : t.includes("premium") ? "premium" : null;
+      continue;
+    }
+    if(!type || !line.trim().startsWith("|")) continue;
+    const c = line.trim().replace(/^\||\|$/g,"").split("|").map(x=>x.trim());
+    if(c.length < 5 || /^[-:\s]+$/.test(c[0]) || /^server ip$/i.test(c[0])) continue;
+    const flag = (c[1].match(/[\u{1F1E6}-\u{1F1FF}]{2}/u) || [""])[0];
+    const region = flag ? [...flag].map(ch => String.fromCharCode(ch.codePointAt(0) - 127397)).join("") : "??";
+    out.push({
+      type,
+      ip: c[0].replace(/⭐/g,"").replace(/[`*]/g,"").trim(),
+      top: c[0].includes("⭐"),
+      region,
+      duels: val(c[2]), ffa: val(c[3]), sandbox: val(c[4]),
+      note: (c[5] || "").trim()
+    });
+  }
+  return out;
+}
+// PARSE-END
+
+async function load(){
+  for(const url of README_URLS){
+    try{
+      const r = await fetch(url, {cache:"no-cache"});
+      if(!r.ok) continue;
+      const data = parse(await r.text());
+      if(data.length) return data;
+    }catch{}
+  }
+  return [];
+}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const flagOf = code => code.length===2 && code!=="??" ? [...code].map(c=>String.fromCodePoint(c.charCodeAt(0)+127397)).join("") : "🌏";
+const nameOf = code => { try{ return new Intl.DisplayNames(["en"],{type:"region"}).of(code); }catch{ return code; } };
 const hue = ip => [...ip].reduce((h,c)=>h*31+c.charCodeAt(0)|0,7);
 const chip = (label,v) => {
   const c = v===1?"y":v==="l"?"l":v===0?"n":"u";
@@ -355,10 +221,10 @@ function row(s){
     : st.online ? `<span class="status"><span class="dot on"></span>${st.players} online</span>`
     : `<span class="status"><span class="dot off"></span>Offline</span>`;
   return `<li class="srv ${s.top?"top":""}">
-    <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${s.ip.replace(/^(as|play)\./,"")[0].toUpperCase()}</div>
+    <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
     <div>
-      <button class="ip" data-ip="${s.ip}" aria-label="Copy ${s.ip}">${s.top?'<span class="star" title="Top pick">★</span>':""}${s.ip}</button>
-      <div class="meta"><span>${FLAG[s.region]} ${REGION[s.region]}</span>${status}${s.note?`<span>${s.note}</span>`:""}</div>
+      <button class="ip" data-ip="${esc(s.ip)}" aria-label="Copy ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
+      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${status}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
     </div>
     <div class="modes">${chip("Duels",s.duels)}${chip("FFA",s.ffa)}${chip("Sandbox",s.sandbox)}</div>
   </li>`;
@@ -369,7 +235,7 @@ function render(){
   const f = S.filter(s =>
     (state.mode==="all" || s[state.mode]===1 || s[state.mode]==="l") &&
     (state.region==="all" || s.region===state.region) &&
-    (!q || s.ip.includes(q)));
+    (!q || s.ip.toLowerCase().includes(q)));
   const group = (type,title,sub) => {
     const items = f.filter(s=>s.type===type).sort((a,b)=>b.top-a.top);
     return items.length ? `<h2>${title}</h2><p class="sub">${sub}</p><ul class="list">${items.map(row).join("")}</ul>` : "";
@@ -377,6 +243,13 @@ function render(){
   $("#out").innerHTML = (group("premium","Premium servers","Require a paid Minecraft account.") +
     group("cracked","Cracked servers","Also open to non-premium accounts.")) ||
     `<div class="empty">No servers match your filters. Clear the search or pick another mode.</div>`;
+}
+
+function setup(){
+  const regions = [...new Set(S.map(s=>s.region))];
+  $("#region").innerHTML = '<option value="all">All regions</option>' +
+    regions.map(r=>`<option value="${r}">${flagOf(r)} ${esc(nameOf(r))}</option>`).join("");
+  $("#stats").innerHTML = `<span><b>${S.length}</b> servers</span><span><b>${S.filter(s=>s.top).length}</b> top picks</span><span><b>${regions.length}</b> regions</span><span id="online"></span>`;
 }
 
 // events
@@ -398,19 +271,27 @@ $("#out").addEventListener("click", async e => {
 // live status (best effort; fails quietly)
 async function ping(s){
   try{
-    const r = await fetch(`https://api.mcsrvstat.us/3/${s.ip}`);
+    const r = await fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(s.ip)}`);
     const d = await r.json();
     state.status[s.ip] = {online:!!d.online, players:d.players?.online ?? 0};
-  }catch{ state.status[s.ip] = {online:false, players:0, unknown:true}; }
+  }catch{ state.status[s.ip] = {online:false, players:0}; }
 }
-render();
-Promise.all(S.map(ping)).then(()=>{
-  const on = S.filter(s=>state.status[s.ip]?.online);
-  const total = on.reduce((n,s)=>n+state.status[s.ip].players,0);
-  if(on.length) $("#online").innerHTML = `<b>${total}</b> players online now`;
-  render();
+
+$("#out").innerHTML = '<div class="empty">Loading servers…</div>';
+load().then(data => {
+  S = data;
+  if(!S.length){
+    $("#out").innerHTML = '<div class="empty">Could not load the server list. <a href="https://github.com/itzyongan/asia-pvp-servers">View it on GitHub</a>.</div>';
+    return;
+  }
+  setup(); render();
+  Promise.all(S.map(ping)).then(() => {
+    const on = S.filter(s=>state.status[s.ip]?.online);
+    const total = on.reduce((n,s)=>n+state.status[s.ip].players,0);
+    if(on.length) $("#online").innerHTML = `<b>${total}</b> players online now`;
+    render();
+  });
 });
 </script>
-<!-- README-CONTENT-END -->
 </body>
 </html>
