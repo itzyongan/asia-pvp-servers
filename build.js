@@ -82,6 +82,8 @@ if (!pattern.test(INDEX)) {
 }
 
 const output = INDEX.replace(pattern, replacement);
+fs.mkdirSync("public", { recursive: true });
 fs.writeFileSync("index.html", output);
+fs.writeFileSync("public/index.html", output);
 
-console.log(`Updated ${servers.length} servers from README.md while preserving index.html design.`);
+console.log(`Updated ${servers.length} servers from README.md and generated public/index.html while preserving index.html design.`);
