@@ -1,66 +1,87 @@
 const fs = require("fs");
-const { marked } = require("marked");
 
-const readme = fs.readFileSync("README.md", "utf8");
-const content = marked.parse(readme);
+const README = fs.readFileSync("README.md", "utf8");
+const INDEX = fs.readFileSync("index.html", "utf8");
 
-const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Asia PvP Servers</title>
+const REGION_CODES = {
+  "🇸🇬": "SG",
+  "🇰🇷": "KR",
+  "🇮🇳": "IN"
+};
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 40px 20px;
-      line-height: 1.6;
-      background: #111;
-      color: #eee;
-    }
+function value(cell) {
+  const v = cell.trim();
+  if (v === "✅") return 1;
+  if (v === "❌") return 0;
+  if (v === "❔") return "l";
+  return null;
+}
 
-    a {
-      color: #66b3ff;
-    }
+function parseServers(type, section) {
+  const rows = section.split(/\r?\n/);
+  return rows
+    .filter(line => /^\|.*\|$/.test(line))
+    .filter(line => !/^\|\s*Server IP\b/i.test(line))
+    .filter(line => !/^\|\s*-+\s*\|/.test(line))
+    .map(line => {
+      const cells = line.split("|").slice(1, -1).map(s => s.trim());
+      if (cells.length < 6) return null;
 
-    img {
-      max-width: 100%;
-    }
+      let ip = cells[0];
+      const top = ip.startsWith("⭐");
+      ip = ip.replace(/^⭐\s*/, "");
 
-    code {
-      background: #222;
-      padding: 2px 5px;
-      border-radius: 4px;
-    }
+      const region = REGION_CODES[cells[1]];
+      if (!ip || !region) return null;
 
-    pre {
-      background: #222;
-      padding: 15px;
-      overflow-x: auto;
-      border-radius: 8px;
-    }
+      return [
+        type,
+        ip,
+        region,
+        value(cells[2]),
+        value(cells[3]),
+        value(cells[4]),
+        cells[5] || "",
+        ...(top ? [1] : [])
+      ];
+    })
+    .filter(Boolean);
+}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
+function sectionBetween(start, end) {
+  const a = README.indexOf(start);
+  if (a === -1) return "";
+  const b = end ? README.indexOf(end, a) : README.length;
+  return README.slice(a, b === -1 ? README.length : b);
+}
 
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #333;
-      text-align: left;
-    }
-  </style>
-</head>
+const premium = parseServers(
+  "premium",
+  sectionBetween("## 💎 Premium Servers", "## 🔓 Cracked Servers")
+);
 
-<body>
-  ${content}
-</body>
-</html>`;
+const cracked = parseServers(
+  "cracked",
+  sectionBetween("## 🔓 Cracked Servers", "---")
+);
 
-fs.writeFileSync("index.html", html);
+const servers = [...premium, ...cracked];
 
-console.log("README.md successfully converted to index.html");
+if (!servers.length) {
+  throw new Error("No servers were parsed from README.md; refusing to overwrite index.html.");
+}
+
+const replacement =
+  "const S = " +
+  JSON.stringify(servers, null, 2) +
+  ".map(a=>({type:a[0],ip:a[1],region:a[2],duels:a[3],ffa:a[4],sandbox:a[5],note:a[6],top:!!a[7]}));";
+
+const pattern = /const S = \[[\s\S]*?\n\]\.map\(a=>\(\{type:a\[0\][\s\S]*?top:!!a\[7\]\}\)\);/;
+if (!pattern.test(INDEX)) {
+  throw new Error("Could not find the server data block in index.html; refusing to overwrite the design.");
+}
+
+const output = INDEX.replace(pattern, replacement);
+fs.writeFileSync("index.html", output);
+
+console.log(`Updated ${servers.length} servers from README.md while preserving index.html design.`);
