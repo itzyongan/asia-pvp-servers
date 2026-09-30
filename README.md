@@ -11,16 +11,15 @@
 ## 💎 Premium Servers
 | Server IP | Region | Duels | FFA | Sandbox | Note |
 |--------|---------|-------|-----|---------|------|
-| ⭐ as.catpvp.xyz | 🇸🇬 | ✅ | ❌ | ✅ | |
 | ⭐ as.mcpvp.club | 🇸🇬 | ✅ | ❌ | ❌ | |
 | ⭐ as.minemen.club | 🇸🇬 | ✅ | ❔ | ❌ | Sword FFA Only |
 | ⭐ as.stray.gg | 🇸🇬 | ❌ | ✅ | ✅ | |
+| ⭐ play.pvphq.com | 🇸🇬 | ✅ | `-` | `-` | |
 | as.meowmc.fun | 🇸🇬 | ✅ | ❌ | ❌ | |
 | as.metalmc.vip | 🇸🇬 | ✅ | ✅ | `-` | |
 | as.strikemc.net | 🇸🇬 | ✅ | ✅ | `-` | |
 | as.xylon.gg | 🇸🇬 | ❌ | ✅ | ❌ | |
 | asiaprac.xyz | 🇸🇬 | ❌ | ❌ | ✅ | |
-| play.pvphq.com | 🇸🇬 | ✅ | `-` | `-` | |
 | pvpconnect.xyz | 🇰🇷 | ✅ | ✅ | ❌ | |
 | xyrismc.fun | 🇮🇳 | ✅ | ❌ | ❌ | |
 
