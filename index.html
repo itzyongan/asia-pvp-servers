@@ -5,12 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AS Servers | Asia Minecraft PvP Server List</title>
 <meta name="description" content="1.9+ Asia Minecraft PvP servers. Duels, FFA and sandbox with Swords, Crystals, Netherite, Boxing and more.">
+<meta name="theme-color" content="#1a1d22">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
 <meta property="og:title" content="AS Servers | Asia Minecraft PvP Server List">
 <meta property="og:description" content="Find low-ping Asia Minecraft PvP servers. Click an IP to copy it.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%235fa83a'/><rect y='5' width='16' height='11' fill='%238a5a33'/></svg>">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%235fa83a'/%3E%3Crect y='5' width='16' height='11' fill='%238a5a33'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap" rel="stylesheet">
 <style>
 :root{
   --deepslate:#1a1d22; --stone:#262a31; --stone-hi:#323843; --line:#3b424e;
@@ -19,7 +23,7 @@
   --px:'Rubik','Noto Sans',system-ui,sans-serif; --body:'Noto Sans',system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0}
-html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 body{background:var(--deepslate);color:var(--text);font:400 16px/1.6 var(--body);-webkit-font-smoothing:antialiased}
 a{color:inherit}
 :focus-visible{outline:3px solid var(--diamond);outline-offset:2px}
@@ -29,7 +33,7 @@ a{color:inherit}
 .grass{height:14px;background:
   linear-gradient(var(--grass) 0 8px,var(--grass-dk) 8px 14px)}
 header.hero{padding:72px 0 48px;border-bottom:4px solid #000}
-.hero h1{font:500 clamp(36px,7vw,60px)/1.08 var(--px);letter-spacing:-.02em}
+.hero h1{font:700 clamp(40px,8vw,72px)/1.02 var(--px);letter-spacing:-.01em;text-shadow:4px 4px 0 #000}
 .hero h1 em{font-style:normal;color:var(--gold)}
 .hero p{max-width:52ch;margin:24px 0 32px;color:var(--muted);font-size:18px}
 .hero .cta{display:flex;flex-wrap:wrap;gap:12px}
@@ -52,14 +56,14 @@ input[type=search]{width:220px}
 
 /* server list */
 main{padding:20px 0 8px}
-h2{font:500 24px/1.2 var(--px);margin:40px 0 6px}
+h2{font:700 26px/1.2 var(--px);margin:40px 0 6px}
 h2:first-child{margin-top:0}
 .sub{color:var(--muted);font-size:14px;margin-bottom:16px}
 .list{display:grid;gap:8px;list-style:none;padding:0}
 .srv{display:grid;grid-template-columns:52px 1fr auto auto;gap:16px;align-items:center;
   background:var(--stone);border:2px solid var(--line);padding:10px 14px 10px 10px}
 .srv:hover{border-color:#fff}
-.icon{width:52px;height:52px;display:grid;place-items:center;border:2px solid #000;font:500 22px var(--px);color:#fff;overflow:hidden}
+.icon{width:52px;height:52px;display:grid;place-items:center;border:2px solid #000;font:700 22px var(--px);color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.6);overflow:hidden}
 .icon img{width:100%;height:100%;display:block;image-rendering:pixelated}
 .top{border-color:var(--gold)}
 .ip{font:700 17px var(--body);background:none;border:0;color:var(--text);cursor:pointer;padding:0;text-align:left;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -82,7 +86,7 @@ h2:first-child{margin-top:0}
 /* footer sections */
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;padding:32px 0 56px}
 .card{background:var(--stone);border:2px solid var(--line);padding:22px}
-.card h3{font:500 19px/1.3 var(--px);margin-bottom:8px}
+.card h3{font:700 20px/1.3 var(--px);margin-bottom:8px}
 .card p{color:var(--muted);font-size:15px;margin-bottom:16px}
 footer{border-top:4px solid #000;padding:24px 0 40px;color:var(--muted);font-size:14px}
 footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
@@ -130,7 +134,7 @@ footer a{color:var(--text)}
   </div>
 </div>
 
-<main class="wrap" id="out"></main>
+<main class="wrap" id="out"><noscript><div class="empty">Turn on JavaScript to see the server list, or read it on <a href="https://github.com/itzyongan/asia-pvp-servers">GitHub</a>.</div></noscript></main>
 
 <section class="wrap" aria-label="Get involved">
   <div class="cards">
@@ -156,7 +160,19 @@ footer a{color:var(--text)}
 
 <script>
 const $ = s => document.querySelector(s);
-const state = {mode:"all", q:"", region:"all", status:{}};
+// Live status is cached per tab for 5 minutes so filtering and reloads don't re-ping every server.
+const CACHE_KEY = "as-status-v1", TTL = 5*60*1000;
+function loadCache(){
+  try{ const c = JSON.parse(sessionStorage.getItem(CACHE_KEY) || "null"); if(c && Date.now()-c.t < TTL) return c.d; }catch{}
+  return {};
+}
+function saveCache(){
+  try{
+    const ok = Object.fromEntries(Object.entries(state.status).filter(([,v]) => !v.unknown));
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:ok}));
+  }catch{}
+}
+const state = {mode:"all", q:"", region:"all", status:loadCache()};
 let S = [];
 
 // The server list is read straight from README.md, so there is no sync step to break.
@@ -223,9 +239,10 @@ const chip = (label,v) => {
 function row(s){
   const h = Math.abs(hue(s.ip))%360, st = state.status[s.ip];
   const status = st===undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
+    : st.unknown ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
     : st.online ? `<span class="status"><span class="dot on"></span>${st.players} online</span>`
     : `<span class="status"><span class="dot off"></span>Offline</span>`;
-  return `<li class="srv ${s.top?"top":""}">
+  return `<li class="srv ${s.top?"top":""}" data-ip="${esc(s.ip)}">
     <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64" loading="lazy">` : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
     <div>
       <button class="ip" data-ip="${esc(s.ip)}" aria-label="Copy ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
@@ -275,13 +292,31 @@ $("#out").addEventListener("click", async e => {
   setTimeout(()=>{ btn.textContent = "Copy IP"; }, 1400);
 });
 
-// live status (best effort; fails quietly)
+// live status: 5 requests at a time, 8s timeout, updates only the row that changed
 async function ping(s){
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 8000);
   try{
-    const r = await fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(s.ip)}`);
+    const r = await fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(s.ip)}`, {signal:ctl.signal});
+    if(!r.ok) throw new Error("bad status");
     const d = await r.json();
-    state.status[s.ip] = {online:!!d.online, players:d.players?.online ?? 0, icon:(typeof d.icon==='string' && d.icon.startsWith('data:image/')) ? d.icon : null};
-  }catch{ state.status[s.ip] = {online:false, players:0}; }
+    state.status[s.ip] = {
+      online: !!d.online,
+      players: d.players?.online ?? 0,
+      icon: (typeof d.icon === "string" && d.icon.startsWith("data:image/")) ? d.icon : null
+    };
+  }catch{ state.status[s.ip] = {unknown:true}; }
+  finally{ clearTimeout(timer); }
+  const li = document.querySelector(`.srv[data-ip="${CSS.escape(s.ip)}"]`);
+  if(li) li.outerHTML = row(s);
+}
+function showOnline(){
+  const on = S.filter(s => state.status[s.ip]?.online);
+  if(on.length) $("#online").innerHTML = `<b>${on.reduce((n,s) => n + state.status[s.ip].players, 0)}</b> players online now`;
+}
+async function checkAll(){
+  const queue = S.filter(s => !state.status[s.ip]);
+  await Promise.all(Array.from({length:5}, async () => { while(queue.length) await ping(queue.shift()); }));
+  saveCache(); showOnline();
 }
 
 $("#out").innerHTML = '<div class="empty">Loading servers…</div>';
@@ -291,13 +326,7 @@ load().then(data => {
     $("#out").innerHTML = '<div class="empty">Could not load the server list. <a href="https://github.com/itzyongan/asia-pvp-servers">View it on GitHub</a>.</div>';
     return;
   }
-  setup(); render();
-  Promise.all(S.map(ping)).then(() => {
-    const on = S.filter(s=>state.status[s.ip]?.online);
-    const total = on.reduce((n,s)=>n+state.status[s.ip].players,0);
-    if(on.length) $("#online").innerHTML = `<b>${total}</b> players online now`;
-    render();
-  });
+  setup(); render(); showOnline(); checkAll();
 });
 </script>
 </body>
