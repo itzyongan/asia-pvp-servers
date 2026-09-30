@@ -15,6 +15,7 @@
 | ⭐ as.minemen.club | 🇸🇬 | ✅ | ❔ | ❌ | Sword FFA Only |
 | ⭐ as.stray.gg | 🇸🇬 | ❌ | ✅ | ✅ | |
 | ⭐ play.pvphq.com | 🇸🇬 | ✅ | `-` | `-` | |
+| as.catpvp.xyz | 🇸🇬 | ✅ | `-` | `-` | |
 | as.meowmc.fun | 🇸🇬 | ✅ | ❌ | ❌ | |
 | as.metalmc.vip | 🇸🇬 | ✅ | ✅ | `-` | |
 | as.strikemc.net | 🇸🇬 | ✅ | ✅ | `-` | |
