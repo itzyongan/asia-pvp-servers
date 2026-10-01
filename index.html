@@ -14,7 +14,10 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%235fa83a'/%3E%3Crect y='5' width='16' height='11' fill='%238a5a33'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://api.mcstatus.io" crossorigin>
+<link rel="preconnect" href="https://api.mcsrvstat.us" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap"></noscript>
 <style>
 :root{
   --deepslate:#1a1d22; --stone:#262a31; --stone-hi:#323843; --line:#3b424e;
@@ -164,16 +167,22 @@ footer a{color:var(--text)}
 
 <script>
 const $ = s => document.querySelector(s);
-// Live status is cached per tab for 5 minutes so filtering and reloads don't re-ping every server.
-const CACHE_KEY = "as-status-v5", TTL = 5*60*1000;
+// Live status is remembered in this browser. Recent results (under 5 min) are reused as they are;
+// older ones (up to 1 hour) are shown instantly and refreshed in the background.
+const CACHE_KEY = "as-status-v6", TTL = 5*60*1000, MAX_AGE = 60*60*1000;
+let cacheAge = Infinity;
 function loadCache(){
-  try{ const c = JSON.parse(sessionStorage.getItem(CACHE_KEY) || "null"); if(c && Date.now()-c.t < TTL) return c.d; }catch{}
+  try{
+    const c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+    if(c && Date.now() - c.t < MAX_AGE){ cacheAge = Date.now() - c.t; return c.d; }
+  }catch{}
   return {};
 }
 function saveCache(){
   try{
     const ok = Object.fromEntries(Object.entries(state.status).filter(([,v]) => !v.unknown));
-    sessionStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:ok}));
+    localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:ok}));
+    cacheAge = 0;
   }catch{}
 }
 const state = {mode:"all", q:"", region:"all", status:loadCache()};
@@ -199,11 +208,11 @@ let S = [];
 
 // The server list is read straight from README.md, so there is no sync step to break.
 // Edit the README tables and commit: the site updates on the next deploy.
-// GitHub first (shows README edits within a few minutes, no redeploy needed),
-// then the copy deployed next to this page as a backup.
+// The copy deployed next to this page is always current once Vercel finishes deploying.
+// GitHub raw is only a backup: it caches for 5 minutes, so it can be stale.
 const README_URLS = [
-  "https://raw.githubusercontent.com/itzyongan/asia-pvp-servers/main/README.md?v=" + Math.floor(Date.now() / 300000),
-  "/README.md"
+  "/README.md",
+  "https://raw.githubusercontent.com/itzyongan/asia-pvp-servers/main/README.md"
 ];
 
 // PARSE-START
@@ -351,7 +360,8 @@ async function lookup(ip){
 }
 async function ping(s){
   const r = await lookup(s.ip);
-  state.status[s.ip] = r ? {...r, version: r.version ? String(r.version).slice(0, 40) : null, motd: r.motd ? String(r.motd).slice(0, 140) : null} : {unknown:true};
+  if(r) state.status[s.ip] = {...r, version: r.version ? String(r.version).slice(0, 40) : null, motd: r.motd ? String(r.motd).slice(0, 140) : null};
+  else if(!state.status[s.ip] || state.status[s.ip].unknown) state.status[s.ip] = {unknown:true};
   const li = document.querySelector(`.srv[data-ip="${CSS.escape(s.ip)}"]`);
   if(li) li.outerHTML = row(s);
 }
@@ -364,20 +374,38 @@ async function runPool(list, n){
   await Promise.all(Array.from({length:n}, async () => { while(queue.length) await ping(queue.shift()); }));
 }
 async function checkAll(){
-  await runPool(S.filter(s => !state.status[s.ip]), 6);
+  const stale = cacheAge >= TTL;
+  await runPool(S.filter(s => stale || !state.status[s.ip]), 6);
   const failed = S.filter(s => state.status[s.ip]?.unknown);
   if(failed.length){ await new Promise(r => setTimeout(r, 2500)); await runPool(failed, 2); } // one gentle retry
   saveCache(); showOnline();
 }
 
-$("#out").innerHTML = '<div class="empty">Loading servers…</div>';
+// Server list: paint the saved copy straight away on repeat visits, then refresh from the README.
+const LIST_KEY = "as-list-v1";
+function savedList(){
+  try{ const c = JSON.parse(localStorage.getItem(LIST_KEY) || "null"); return Array.isArray(c) && c.length ? c : null; }catch{ return null; }
+}
+let checks = Promise.resolve();
+function applyList(data, first){
+  S = data; setup();
+  if(first) readUrl();
+  else { if(!S.some(s => s.region === state.region)) state.region = "all"; $("#region").value = state.region; }
+  render(); showOnline();
+  checks = checks.then(checkAll);
+}
+const saved = savedList();
+if(saved) applyList(saved, true);
+else $("#out").innerHTML = '<div class="empty">Loading servers…</div>';
 load().then(data => {
-  S = data;
-  if(!S.length){
-    $("#out").innerHTML = '<div class="empty">Could not load the server list. <a href="https://github.com/itzyongan/asia-pvp-servers">View it on GitHub</a>.</div>';
+  if(!data.length){
+    if(!saved) $("#out").innerHTML = '<div class="empty">Could not load the server list. <a href="https://github.com/itzyongan/asia-pvp-servers">View it on GitHub</a>.</div>';
     return;
   }
-  setup(); readUrl(); render(); showOnline(); checkAll();
+  const fresh = JSON.stringify(data);
+  try{ localStorage.setItem(LIST_KEY, fresh); }catch{}
+  if(!saved) applyList(data, true);
+  else if(fresh !== JSON.stringify(saved)) applyList(data, false);
 });
 </script>
 </body>
