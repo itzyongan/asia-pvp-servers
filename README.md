@@ -20,7 +20,7 @@
 | as.metalmc.vip | 🇸🇬 | ✅ | ✅ | `-` |
 | as.strikemc.net | 🇸🇬 | ✅ | ✅ | `-` |
 | as.xylon.gg | 🇸🇬 | ❌ | ✅ | ❌ |
-| asiaprac.xyz | 🇸🇬 | ❌ | ❌ | ✅ |
+| sg.asiaprac.xyz | 🇸🇬 | ❌ | ❌ | ✅ |
 | pvpconnect.xyz | 🇰🇷 | ✅ | ✅ | ❌ |
 | xyrismc.fun | 🇮🇳 | ✅ | ❌ | ❌ |
 
