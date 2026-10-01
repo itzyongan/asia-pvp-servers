@@ -61,7 +61,7 @@ input[type=search],select{font:400 14px var(--body);color:var(--text);background
 input[type=search]{width:220px}
 
 /* server list */
-main{padding:20px 0 8px}
+main{padding:20px 0 8px;min-height:40vh}
 h2{font:700 26px/1.2 var(--px);margin:40px 0 6px}
 h2:first-child{margin-top:0}
 .sub{color:var(--muted);font-size:14px;margin-bottom:16px}
@@ -86,7 +86,7 @@ h2:first-child{margin-top:0}
 .dot{width:9px;height:9px;background:var(--muted)}
 .dot.on{background:var(--grass)}.dot.off{background:var(--no)}
 .copy{padding:8px 16px;font-size:14px;white-space:nowrap;min-width:92px}
-.srv{cursor:pointer}
+.srv{cursor:pointer;content-visibility:auto;contain-intrinsic-size:auto 76px}
 .ver{max-width:24ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty{padding:32px;text-align:center;color:var(--muted);border:2px dashed var(--line)}
 
@@ -138,6 +138,10 @@ footer a{color:var(--text)}
       <select id="region" aria-label="Filter by region">
         <option value="all">All regions</option>
       </select>
+      <select id="sort" aria-label="Sort servers">
+        <option value="default">Default order</option>
+        <option value="players">Most players</option>
+      </select>
     </div>
   </div>
 </div>
@@ -186,13 +190,14 @@ function saveCache(){
     cacheAge = 0;
   }catch{}
 }
-const state = {mode:"all", q:"", region:"all", status:loadCache()};
+const state = {mode:"all", q:"", region:"all", sort:"default", status:loadCache()};
 
 // Keep filters in the address bar so a filtered view can be shared as a link.
 function syncUrl(){
   const p = new URLSearchParams();
   if(state.mode !== "all") p.set("mode", state.mode);
   if(state.region !== "all") p.set("region", state.region);
+  if(state.sort !== "default") p.set("sort", state.sort);
   if(state.q.trim()) p.set("q", state.q.trim());
   const qs = p.toString();
   try{ history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash); }catch{}
@@ -201,9 +206,10 @@ function readUrl(){
   const p = new URLSearchParams(location.search);
   if(["duels","ffa","sandbox"].includes(p.get("mode"))) state.mode = p.get("mode");
   if(p.get("region") && S.some(s => s.region === p.get("region"))) state.region = p.get("region");
+  if(p.get("sort") === "players") state.sort = "players";
   state.q = (p.get("q") || "").slice(0, 60);
   document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-pressed", t.dataset.mode === state.mode));
-  $("#region").value = state.region; $("#q").value = state.q;
+  $("#region").value = state.region; $("#sort").value = state.sort; $("#q").value = state.q;
 }
 let S = [];
 
@@ -260,7 +266,9 @@ async function load(){
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const flagOf = code => code.length===2 && code!=="??" ? [...code].map(c=>String.fromCodePoint(c.charCodeAt(0)+127397)).join("") : "🌏";
-const nameOf = code => { try{ return new Intl.DisplayNames(["en"],{type:"region"}).of(code); }catch{ return code; } };
+const regionNames = (() => { try{ return new Intl.DisplayNames(["en"], {type:"region"}); }catch{ return null; } })();
+const nameCache = {};
+const nameOf = code => nameCache[code] ??= (() => { try{ return regionNames.of(code); }catch{ return code; } })();
 const hue = ip => [...ip].reduce((h,c)=>h*31+c.charCodeAt(0)|0,7);
 const chip = (label,v) => {
   const c = v===1?"y":v==="l"?"l":v===0?"n":"u";
@@ -285,6 +293,16 @@ function row(s){
   </li>`;
 }
 
+// Default: top picks first, otherwise README order. Players: most online first, offline/unknown last
+// (ties keep the default order because sorting is stable).
+function cmp(a, b){
+  if(state.sort === "players"){
+    const pa = state.status[a.ip], pb = state.status[b.ip];
+    const na = pa?.online ? pa.players : -1, nb = pb?.online ? pb.players : -1;
+    if(na !== nb) return nb - na;
+  }
+  return b.top - a.top;
+}
 function render(){
   syncUrl();
   const q = state.q.trim().toLowerCase();
@@ -293,7 +311,7 @@ function render(){
     (state.region==="all" || s.region===state.region) &&
     (!q || s.ip.toLowerCase().includes(q)));
   const group = (type,title,sub) => {
-    const items = f.filter(s=>s.type===type).sort((a,b)=>b.top-a.top);
+    const items = f.filter(s=>s.type===type).sort(cmp);
     return items.length ? `<h2>${title}</h2><p class="sub">${sub}</p><ul class="list">${items.map(row).join("")}</ul>` : "";
   };
   $("#out").innerHTML = (group("premium","Premium servers","Require a paid Minecraft account.") +
@@ -315,8 +333,10 @@ $("#tabs").addEventListener("click", e => {
   document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-pressed", t===b));
   render();
 });
-$("#q").addEventListener("input", e=>{state.q=e.target.value;render()});
+let qTimer;
+$("#q").addEventListener("input", e=>{ clearTimeout(qTimer); const v = e.target.value; qTimer = setTimeout(() => { state.q = v; render(); }, 120); });
 $("#region").addEventListener("change", e=>{state.region=e.target.value;render()});
+$("#sort").addEventListener("change", e=>{state.sort=e.target.value;render()});
 // Click anywhere on a server box to copy its IP.
 async function copyText(text){
   try{ await navigator.clipboard.writeText(text); return true; }catch{}
@@ -378,8 +398,11 @@ async function ping(s){
   const r = await lookup(s.ip);
   if(r) state.status[s.ip] = {...r, version: r.version ? String(r.version).slice(0, 40) : null, motd: r.motd ? String(r.motd).slice(0, 140) : null};
   else if(!state.status[s.ip] || state.status[s.ip].unknown) state.status[s.ip] = {unknown:true};
+  // Redraw from the CURRENT list: if the README refresh replaced the saved list while this lookup
+  // was running, `s` is an outdated copy (e.g. missing a newly added star).
+  const cur = S.find(x => x.ip === s.ip);
   const li = document.querySelector(`.srv[data-ip="${CSS.escape(s.ip)}"]`);
-  if(li) li.outerHTML = row(s);
+  if(li && cur) li.outerHTML = row(cur);
 }
 function showOnline(){
   const on = S.filter(s => state.status[s.ip]?.online);
@@ -395,6 +418,7 @@ async function checkAll(){
   const failed = S.filter(s => state.status[s.ip]?.unknown);
   if(failed.length){ await new Promise(r => setTimeout(r, 2500)); await runPool(failed, 2); } // one gentle retry
   saveCache(); showOnline();
+  if(state.sort === "players") render(); // re-order once the fresh counts are in
 }
 
 // Server list: paint the saved copy straight away on repeat visits, then refresh from the README.
