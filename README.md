@@ -14,7 +14,7 @@
 | ⭐ as.mcpvp.club | 🇸🇬 | ✅ | ❌ | ❌ |
 | ⭐ as.minemen.club | 🇸🇬 | ✅ | ❔ | ❌ |
 | ⭐ as.stray.gg | 🇸🇬 | ❌ | ✅ | ✅ |
-| ⭐ mcpvp.com | - | - | - | - |
+| ⭐ mcpvp.com | 🇸🇬 | ✅ | ❌ | ❌ |
 | ⭐ play.pvphq.com | 🇸🇬 | ✅ | `-` | `-` |
 | ⭐ as.catpvp.xyz | 🇸🇬 | ✅ | `-` | `-` |
 | as.meowmc.fun | 🇸🇬 | ✅ | ❌ | ❌ |
