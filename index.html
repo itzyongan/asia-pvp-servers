@@ -81,6 +81,7 @@ h2:first-child{margin-top:0}
 .dot{width:9px;height:9px;background:var(--muted)}
 .dot.on{background:var(--grass)}.dot.off{background:var(--no)}
 .copy{padding:8px 16px;font-size:14px;white-space:nowrap;min-width:92px}
+.ver{max-width:24ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty{padding:32px;text-align:center;color:var(--muted);border:2px dashed var(--line)}
 
 /* footer sections */
@@ -154,14 +155,14 @@ footer a{color:var(--text)}
 <footer>
   <div class="wrap">
     <span>Made by <a href="https://linktr.ee/itzyongan" target="_blank" rel="noopener">itzyongan</a>. Not affiliated with Mojang or Microsoft.</span>
-    <span>Player counts come from <a href="https://mcsrvstat.us" target="_blank" rel="noopener">mcsrvstat.us</a>.</span>
+    <span>Player counts from <a href="https://mcstatus.io" target="_blank" rel="noopener">mcstatus.io</a> and <a href="https://mcsrvstat.us" target="_blank" rel="noopener">mcsrvstat.us</a>.</span>
   </div>
 </footer>
 
 <script>
 const $ = s => document.querySelector(s);
 // Live status is cached per tab for 5 minutes so filtering and reloads don't re-ping every server.
-const CACHE_KEY = "as-status-v1", TTL = 5*60*1000;
+const CACHE_KEY = "as-status-v5", TTL = 5*60*1000;
 function loadCache(){
   try{ const c = JSON.parse(sessionStorage.getItem(CACHE_KEY) || "null"); if(c && Date.now()-c.t < TTL) return c.d; }catch{}
   return {};
@@ -173,6 +174,24 @@ function saveCache(){
   }catch{}
 }
 const state = {mode:"all", q:"", region:"all", status:loadCache()};
+
+// Keep filters in the address bar so a filtered view can be shared as a link.
+function syncUrl(){
+  const p = new URLSearchParams();
+  if(state.mode !== "all") p.set("mode", state.mode);
+  if(state.region !== "all") p.set("region", state.region);
+  if(state.q.trim()) p.set("q", state.q.trim());
+  const qs = p.toString();
+  try{ history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash); }catch{}
+}
+function readUrl(){
+  const p = new URLSearchParams(location.search);
+  if(["duels","ffa","sandbox"].includes(p.get("mode"))) state.mode = p.get("mode");
+  if(p.get("region") && S.some(s => s.region === p.get("region"))) state.region = p.get("region");
+  state.q = (p.get("q") || "").slice(0, 60);
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-pressed", t.dataset.mode === state.mode));
+  $("#region").value = state.region; $("#q").value = state.q;
+}
 let S = [];
 
 // The server list is read straight from README.md, so there is no sync step to break.
@@ -246,7 +265,7 @@ function row(s){
     <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64" loading="lazy">` : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
     <div>
       <button class="ip" data-ip="${esc(s.ip)}" aria-label="Copy ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
-      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${status}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
+      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${status}${st?.version ? `<span class="ver" title="${esc(st.motd || st.version)}">${esc(st.version)}</span>` : ""}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
     </div>
     <div class="modes">${chip("Duels",s.duels)}${chip("FFA",s.ffa)}${chip("Sandbox",s.sandbox)}</div>
     <button class="btn copy" data-ip="${esc(s.ip)}">Copy IP</button>
@@ -254,6 +273,7 @@ function row(s){
 }
 
 function render(){
+  syncUrl();
   const q = state.q.trim().toLowerCase();
   const f = S.filter(s =>
     (state.mode==="all" || s[state.mode]===1 || s[state.mode]==="l") &&
@@ -292,20 +312,43 @@ $("#out").addEventListener("click", async e => {
   setTimeout(()=>{ btn.textContent = "Copy IP"; }, 1400);
 });
 
-// live status: 5 requests at a time, 8s timeout, updates only the row that changed
-async function ping(s){
-  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 8000);
+// Live status. Primary source: mcstatus.io (fast). If it fails, or says "offline", mcsrvstat.us double-checks.
+const num = v => Number.isFinite(v) ? v : 0;
+const dataIcon = i => (typeof i === "string" && i.startsWith("data:image/")) ? i : null;
+async function getJson(url, ms){
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), ms);
   try{
-    const r = await fetch(`https://api.mcsrvstat.us/3/${encodeURIComponent(s.ip)}`, {signal:ctl.signal});
-    if(!r.ok) throw new Error("bad status");
-    const d = await r.json();
-    state.status[s.ip] = {
-      online: !!d.online,
-      players: d.players?.online ?? 0,
-      icon: (typeof d.icon === "string" && d.icon.startsWith("data:image/")) ? d.icon : null
-    };
-  }catch{ state.status[s.ip] = {unknown:true}; }
-  finally{ clearTimeout(timer); }
+    const r = await fetch(url, {signal:ctl.signal});
+    if(!r.ok) throw new Error("http " + r.status);
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
+async function lookupMcstatus(ip){
+  const d = await getJson(`https://api.mcstatus.io/v2/status/java/${encodeURIComponent(ip)}?query=false&timeout=4`, 7000);
+  const v = d.version;
+  return {
+    online: !!d.online, players: num(d.players?.online), icon: dataIcon(d.icon),
+    version: v?.name_clean ?? v?.name?.clean ?? (typeof v?.name === "string" ? v.name : null),
+    motd: typeof d.motd?.clean === "string" ? d.motd.clean : null
+  };
+}
+async function lookupMcsrvstat(ip){
+  const d = await getJson(`https://api.mcsrvstat.us/3/${encodeURIComponent(ip)}`, 9000);
+  return {
+    online: !!d.online, players: num(d.players?.online), icon: dataIcon(d.icon),
+    version: typeof d.version === "string" ? d.version : null,
+    motd: Array.isArray(d.motd?.clean) ? d.motd.clean.join(" ") : null
+  };
+}
+async function lookup(ip){
+  let first = null;
+  try{ first = await lookupMcstatus(ip); if(first.online) return first; }catch{}
+  try{ const second = await lookupMcsrvstat(ip); if(second.online || !first) return second; }catch{}
+  return first; // null means both services failed
+}
+async function ping(s){
+  const r = await lookup(s.ip);
+  state.status[s.ip] = r ? {...r, version: r.version ? String(r.version).slice(0, 40) : null, motd: r.motd ? String(r.motd).slice(0, 140) : null} : {unknown:true};
   const li = document.querySelector(`.srv[data-ip="${CSS.escape(s.ip)}"]`);
   if(li) li.outerHTML = row(s);
 }
@@ -313,9 +356,14 @@ function showOnline(){
   const on = S.filter(s => state.status[s.ip]?.online);
   if(on.length) $("#online").innerHTML = `<b>${on.reduce((n,s) => n + state.status[s.ip].players, 0)}</b> players online now`;
 }
+async function runPool(list, n){
+  const queue = [...list];
+  await Promise.all(Array.from({length:n}, async () => { while(queue.length) await ping(queue.shift()); }));
+}
 async function checkAll(){
-  const queue = S.filter(s => !state.status[s.ip]);
-  await Promise.all(Array.from({length:5}, async () => { while(queue.length) await ping(queue.shift()); }));
+  await runPool(S.filter(s => !state.status[s.ip]), 6);
+  const failed = S.filter(s => state.status[s.ip]?.unknown);
+  if(failed.length){ await new Promise(r => setTimeout(r, 2500)); await runPool(failed, 2); } // one gentle retry
   saveCache(); showOnline();
 }
 
@@ -326,7 +374,7 @@ load().then(data => {
     $("#out").innerHTML = '<div class="empty">Could not load the server list. <a href="https://github.com/itzyongan/asia-pvp-servers">View it on GitHub</a>.</div>';
     return;
   }
-  setup(); render(); showOnline(); checkAll();
+  setup(); readUrl(); render(); showOnline(); checkAll();
 });
 </script>
 </body>
