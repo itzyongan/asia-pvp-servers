@@ -9,32 +9,32 @@
 ---
 
 ## 💎 Premium Servers
-| Server IP | Region | Duels | FFA | Sandbox | Note |
-|--------|---------|-------|-----|---------|------|
-| ⭐ as.mcpvp.club | 🇸🇬 | ✅ | ❌ | ❌ | |
-| ⭐ as.minemen.club | 🇸🇬 | ✅ | ❔ | ❌ | Sword FFA Only |
-| ⭐ as.stray.gg | 🇸🇬 | ❌ | ✅ | ✅ | |
-| ⭐ play.pvphq.com | 🇸🇬 | ✅ | `-` | `-` | |
-| as.catpvp.xyz | 🇸🇬 | ✅ | `-` | `-` | |
-| as.meowmc.fun | 🇸🇬 | ✅ | ❌ | ❌ | |
-| as.metalmc.vip | 🇸🇬 | ✅ | ✅ | `-` | |
-| as.strikemc.net | 🇸🇬 | ✅ | ✅ | `-` | |
-| as.xylon.gg | 🇸🇬 | ❌ | ✅ | ❌ | |
-| asiaprac.xyz | 🇸🇬 | ❌ | ❌ | ✅ | |
-| pvpconnect.xyz | 🇰🇷 | ✅ | ✅ | ❌ | |
-| xyrismc.fun | 🇮🇳 | ✅ | ❌ | ❌ | |
+| Server IP | Region | Duels | FFA | Sandbox |
+|--------|---------|-------|-----|---------|
+| ⭐ as.mcpvp.club | 🇸🇬 | ✅ | ❌ | ❌ |
+| ⭐ as.minemen.club | 🇸🇬 | ✅ | ❔ | ❌ |
+| ⭐ as.stray.gg | 🇸🇬 | ❌ | ✅ | ✅ |
+| ⭐ play.pvphq.com | 🇸🇬 | ✅ | `-` | `-` |
+| as.catpvp.xyz | 🇸🇬 | ✅ | `-` | `-` |
+| as.meowmc.fun | 🇸🇬 | ✅ | ❌ | ❌ |
+| as.metalmc.vip | 🇸🇬 | ✅ | ✅ | `-` |
+| as.strikemc.net | 🇸🇬 | ✅ | ✅ | `-` |
+| as.xylon.gg | 🇸🇬 | ❌ | ✅ | ❌ |
+| asiaprac.xyz | 🇸🇬 | ❌ | ❌ | ✅ |
+| pvpconnect.xyz | 🇰🇷 | ✅ | ✅ | ❌ |
+| xyrismc.fun | 🇮🇳 | ✅ | ❌ | ❌ |
 
 ## 🔓 Cracked Servers
-| Server IP | Region | Duels | FFA | Sandbox | Note |
-|--------|---------|-------|-----|---------|------|
-| as.acentramc.com | 🇸🇬 | ✅ | ✅ | ❌ | |
-| as.chickencraft.nl | 🇸🇬 | ✅ | ✅ | ✅ | |
-| fusion-network.xyz | 🇸🇬 | ❌ | ✅ | ❌ | |
-| gamertee.net | 🇸🇬 | ✅ | ✅ | ❌ | |
-| mazerclub.net | 🇸🇬 | ✅ | ✅ | ✅ | |
-| minesive.com | 🇸🇬 | ✅ | ✅ | ✅ | |
-| play.swiftsmp.com | 🇸🇬 | ❌ | ✅ | ✅ | |
-| staticpvp.fun | 🇸🇬 | ✅ | ✅ | ❌ | |
+| Server IP | Region | Duels | FFA | Sandbox |
+|--------|---------|-------|-----|---------|
+| as.acentramc.com | 🇸🇬 | ✅ | ✅ | ❌ |
+| as.chickencraft.nl | 🇸🇬 | ✅ | ✅ | ✅ |
+| fusion-network.xyz | 🇸🇬 | ❌ | ✅ | ❌ |
+| gamertee.net | 🇸🇬 | ✅ | ✅ | ❌ |
+| mazerclub.net | 🇸🇬 | ✅ | ✅ | ✅ |
+| minesive.com | 🇸🇬 | ✅ | ✅ | ✅ |
+| play.swiftsmp.com | 🇸🇬 | ❌ | ✅ | ✅ |
+| staticpvp.fun | 🇸🇬 | ✅ | ✅ | ❌ |
 
 ---
 
