@@ -32,7 +32,10 @@ a{color:inherit}
 /* hero: grass strip on top, like the top layer of a world */
 .grass{height:14px;background:
   linear-gradient(var(--grass) 0 8px,var(--grass-dk) 8px 14px)}
-header.hero{padding:72px 0 48px;border-bottom:4px solid #000}
+header.hero{position:relative;padding:72px 0 48px;border-bottom:4px solid #000}
+.statuslink{position:absolute;top:20px;right:20px;display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:4px 2px}
+.statuslink::before{content:"";width:8px;height:8px;background:var(--grass)}
+.statuslink:hover{color:var(--text);text-decoration:underline;text-underline-offset:4px}
 .hero h1{font:700 clamp(40px,8vw,72px)/1.02 var(--px);letter-spacing:-.01em;text-shadow:4px 4px 0 #000}
 .hero h1 em{font-style:normal;color:var(--gold)}
 .hero p{max-width:52ch;margin:24px 0 32px;color:var(--muted);font-size:18px}
@@ -65,7 +68,6 @@ h2:first-child{margin-top:0}
 .srv:hover{border-color:#fff}
 .icon{width:52px;height:52px;display:grid;place-items:center;border:2px solid #000;font:700 22px var(--px);color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.6);overflow:hidden}
 .icon img{width:100%;height:100%;display:block;image-rendering:pixelated}
-.top{border-color:var(--gold)}
 .ip{font:700 17px var(--body);background:none;border:0;color:var(--text);cursor:pointer;padding:0;text-align:left;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ip:hover{color:var(--diamond)}
 .star{color:var(--gold);font-size:15px}
@@ -107,6 +109,7 @@ footer a{color:var(--text)}
 <div class="grass" aria-hidden="true"></div>
 
 <header class="hero">
+  <a class="statuslink" href="https://stats.uptimerobot.com/qyZBlkRGF3" target="_blank" rel="noopener">Status page</a>
   <div class="wrap">
     <h1>Asia <em>PvP</em><br>server list</h1>
     <p>Low-ping 1.9+ practice servers across Asia. Duels, free-for-all and sandbox with Swords, Crystals, Netherite, Boxing and more.</p>
