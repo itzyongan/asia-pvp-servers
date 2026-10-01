@@ -29,7 +29,7 @@
 |--------|---------|-------|-----|---------|
 | as.acentramc.com | 🇸🇬 | ✅ | ✅ | ❌ |
 | as.chickencraft.nl | 🇸🇬 | ✅ | ✅ | ✅ |
-| asiapvp.xyz | - | - | - | - |
+| asiapvp.xyz | 🇸🇬 | ✅ | ❌ | ❌ |
 | fusion-network.xyz | 🇸🇬 | ❌ | ✅ | ❌ |
 | gamertee.net | 🇸🇬 | ✅ | ✅ | ❌ |
 | mazerclub.net | 🇸🇬 | ✅ | ✅ | ✅ |
