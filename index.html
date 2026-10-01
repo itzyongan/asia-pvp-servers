@@ -86,6 +86,14 @@ h2:first-child{margin-top:0}
 .dot{width:9px;height:9px;background:var(--muted)}
 .dot.on{background:var(--grass)}.dot.off{background:var(--no)}
 .copy{padding:8px 16px;font-size:14px;white-space:nowrap;min-width:92px}
+.srv{cursor:pointer}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:20;max-width:calc(100% - 32px);
+  transform:translate(-50%,16px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+  background:var(--stone-hi);color:var(--text);border:3px solid #000;padding:11px 20px;font-weight:500;font-size:15px;
+  box-shadow:inset -3px -3px 0 #1f232a,inset 3px 3px 0 #4a5260;text-align:center;overflow-wrap:anywhere}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast b{color:#8fd16a}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
 .ver{max-width:24ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty{padding:32px;text-align:center;color:var(--muted);border:2px dashed var(--line)}
 
@@ -164,6 +172,8 @@ footer a{color:var(--text)}
     <span>Player counts from <a href="https://mcstatus.io" target="_blank" rel="noopener">mcstatus.io</a> and <a href="https://mcsrvstat.us" target="_blank" rel="noopener">mcsrvstat.us</a>.</span>
   </div>
 </footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -316,12 +326,35 @@ $("#tabs").addEventListener("click", e => {
 });
 $("#q").addEventListener("input", e=>{state.q=e.target.value;render()});
 $("#region").addEventListener("change", e=>{state.region=e.target.value;render()});
+// Click anywhere on a server box to copy its IP.
+let toastTimer;
+function toast(html){
+  const t = $("#toast");
+  t.innerHTML = html; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2000);
+}
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); return true; }catch{}
+  try{ // fallback for older browsers
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand("copy"); ta.remove(); return ok;
+  }catch{ return false; }
+}
 $("#out").addEventListener("click", async e => {
-  const b = e.target.closest(".ip, .copy"); if(!b) return;
-  try{ await navigator.clipboard.writeText(b.dataset.ip); }catch{ return; }
-  const btn = b.closest(".srv").querySelector(".copy");
-  btn.textContent = "Copied!";
-  setTimeout(()=>{ btn.textContent = "Copy IP"; }, 1400);
+  const card = e.target.closest(".srv"); if(!card) return;
+  if(String(getSelection()).trim()) return; // don't hijack text selection
+  const ip = card.dataset.ip;
+  const ok = await copyText(ip);
+  if(ok){
+    // look the button up fresh: its row may have been redrawn by a status update
+    const btnFor = () => document.querySelector(`.srv[data-ip="${CSS.escape(ip)}"] .copy`);
+    const btn = btnFor(); if(btn) btn.textContent = "Copied!";
+    setTimeout(() => { const b = btnFor(); if(b) b.textContent = "Copy IP"; }, 1400);
+  }
+  toast(ok ? `<b>✓</b> Copied <b>${esc(ip)}</b> to clipboard` : "Couldn't copy. Please copy the IP manually.");
 });
 
 // Live status. Primary source: mcstatus.io (fast). If it fails, or says "offline", mcsrvstat.us double-checks.
