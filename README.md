@@ -11,12 +11,12 @@
 ## 💎 Premium Servers
 | Server IP | Region | Duels | FFA | Sandbox |
 |--------|---------|-------|-----|---------|
+| ⭐ as.catpvp.xyz | 🇸🇬 | ✅ | `-` | `-` |
 | ⭐ as.mcpvp.club | 🇸🇬 | ✅ | ❌ | ❌ |
 | ⭐ as.minemen.club | 🇸🇬 | ✅ | ❔ | ❌ |
 | ⭐ as.stray.gg | 🇸🇬 | ❌ | ✅ | ✅ |
-| ⭐ mcpvp.com | 🇸🇬 | ✅ | ❌ | ❌ |
+| ⭐ mcpvp.com | - | - | - | - |
 | ⭐ play.pvphq.com | 🇸🇬 | ✅ | `-` | `-` |
-| ⭐ as.catpvp.xyz | 🇸🇬 | ✅ | `-` | `-` |
 | as.meowmc.fun | 🇸🇬 | ✅ | ❌ | ❌ |
 | as.metalmc.vip | 🇸🇬 | ✅ | ✅ | `-` |
 | as.strikemc.net | 🇸🇬 | ✅ | ✅ | `-` |
@@ -33,7 +33,7 @@
 | asiapvp.xyz | 🇸🇬 | ✅ | ❌ | ❌ |
 | fusion-network.xyz | 🇸🇬 | ❌ | ✅ | ❌ |
 | gamertee.net | 🇸🇬 | ✅ | ✅ | ❌ |
-| mazerclub.net | 🇸🇬 | ✅ | ✅ | ✅ |
+| mazerclub.net | 🇸🇬 | ✅ | ✅ | ❌ |
 | minesive.com | 🇸🇬 | ✅ | ✅ | ✅ |
 | play.swiftsmp.com | 🇸🇬 | ❌ | ✅ | ✅ |
 | staticpvp.fun | 🇸🇬 | ✅ | ✅ | ❌ |
