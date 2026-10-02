@@ -16,8 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://api.mcstatus.io" crossorigin>
 <link rel="preconnect" href="https://api.mcsrvstat.us" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap"></noscript>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap">
 <style>
 :root{
   --deepslate:#1a1d22; --stone:#262a31; --stone-hi:#323843; --line:#3b424e;
@@ -26,7 +25,7 @@
   --px:'Rubik','Noto Sans',system-ui,sans-serif; --body:'Noto Sans',system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0}
-@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-y:scroll;scrollbar-gutter:stable}
 body{background:var(--deepslate);color:var(--text);font:400 16px/1.6 var(--body);-webkit-font-smoothing:antialiased}
 a{color:inherit}
 :focus-visible{outline:3px solid var(--diamond);outline-offset:2px}
@@ -48,6 +47,7 @@ header.hero{position:relative;padding:72px 0 48px;border-bottom:4px solid #000}
 .btn:hover{filter:brightness(1.08)}
 .btn.alt{background:var(--stone-hi);box-shadow:inset -3px -3px 0 #1f232a,inset 3px 3px 0 #4a5260}
 .stats{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:36px;color:var(--muted);font-size:15px}
+.stats #online{display:inline-block;min-width:12em}
 .stats b{color:var(--text)}
 
 /* toolbar */
@@ -74,7 +74,6 @@ h2:first-child{margin-top:0}
 .ip{font:700 17px var(--body);background:none;border:0;color:var(--text);cursor:pointer;padding:0;text-align:left;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ip:hover{color:var(--diamond)}
 .star{color:var(--gold);font-size:15px}
-.copied{font:500 12px var(--body);color:#0e1a0a;background:var(--grass);padding:1px 8px}
 .meta{display:flex;gap:6px 14px;flex-wrap:wrap;color:var(--muted);font-size:13.5px;margin-top:2px}
 .modes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .chip{font:500 12.5px var(--body);padding:3px 9px;border:2px solid var(--line);color:var(--muted);white-space:nowrap}
@@ -87,7 +86,7 @@ h2:first-child{margin-top:0}
 .status.stale{opacity:.5}
 .dot.on{background:var(--grass)}.dot.off{background:var(--no)}
 .copy{padding:8px 16px;font-size:14px;white-space:nowrap;min-width:92px}
-.srv{cursor:pointer;content-visibility:auto;contain-intrinsic-size:auto 76px}
+.srv{cursor:pointer}
 .ver{max-width:24ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty{padding:32px;text-align:center;color:var(--muted);border:2px dashed var(--line)}
 
@@ -119,7 +118,7 @@ footer a{color:var(--text)}
     <h1>Asia <em>PvP</em><br>server list</h1>
     <p>Low-ping 1.9+ practice servers across Asia. Duels, free-for-all and sandbox with Swords, Crystals, Netherite, Boxing and more.</p>
     <div class="cta">
-      <a class="btn" href="#servers">Browse servers</a>
+      <a class="btn" href="#servers" id="browse">Browse servers</a>
       <a class="btn alt" href="https://discord.gg/TTAgYjXmkh" target="_blank" rel="noopener">Join Discord</a>
     </div>
     <div class="stats" id="stats"></div>
@@ -277,7 +276,7 @@ const chip = (label,v) => {
 };
 
 const flash = {}; // per-server button label ("Copied!") kept in data so a row redraw can't wipe it
-function row(s){
+function rowInner(s){
   const h = Math.abs(hue(s.ip))%360, st = state.status[s.ip];
   let status = st===undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
     : st.unknown ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
@@ -285,7 +284,7 @@ function row(s){
     : `<span class="status"><span class="dot off"></span>Offline</span>`;
   const fl = flash[s.ip], label = fl && fl.until > Date.now() ? fl.text : "Copy IP";
   const statusHtml = st && !st.unknown && !fresh.has(s.ip) ? status.replace('class="status"','class="status stale"') : status;
-  return `<li class="srv ${s.top?"top":""}" data-ip="${esc(s.ip)}">
+  return `
     <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64" loading="lazy">` : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
     <div>
       <button class="ip" data-ip="${esc(s.ip)}" aria-label="Copy ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
@@ -293,8 +292,9 @@ function row(s){
     </div>
     <div class="modes">${chip("Duels",s.duels)}${chip("FFA",s.ffa)}${chip("Sandbox",s.sandbox)}</div>
     <button class="btn copy" data-ip="${esc(s.ip)}">${label}</button>
-  </li>`;
+  `;
 }
+const row = s => `<li class="srv" data-ip="${esc(s.ip)}">${rowInner(s)}</li>`;
 
 // Default order: top picks first, otherwise README order.
 const byTop = (a, b) => b.top - a.top;
@@ -303,6 +303,15 @@ const byTop = (a, b) => b.top - a.top;
 function byPlayers(a, b){
   const pa = state.status[a.ip], pb = state.status[b.ip];
   return (pb?.online ? pb.players : -1) - (pa?.online ? pa.players : -1);
+}
+function keepAnchor(fn){
+  const barH = document.querySelector(".bar")?.offsetHeight || 0;
+  const a = [...document.querySelectorAll(".srv")].find(r => r.getBoundingClientRect().bottom > barH);
+  const ip = a?.dataset.ip, top = a?.getBoundingClientRect().top;
+  fn();
+  if(!ip) return;
+  const n = document.querySelector(`.srv[data-ip="${CSS.escape(ip)}"]`);
+  if(n) scrollBy({top: n.getBoundingClientRect().top - top, behavior: "instant"});
 }
 function render(){
   syncUrl();
@@ -407,7 +416,7 @@ async function ping(s){
   // was running, `s` is an outdated copy (e.g. missing a newly added star).
   const cur = S.find(x => x.ip === s.ip);
   const li = document.querySelector(`.srv[data-ip="${CSS.escape(s.ip)}"]`);
-  if(li && cur) li.outerHTML = row(cur);
+  if(li && cur) li.innerHTML = rowInner(cur);
 }
 function showOnline(){
   const on = S.filter(s => state.status[s.ip]?.online);
@@ -422,7 +431,7 @@ async function checkAll(){
   const failed = S.filter(s => !fresh.has(s.ip));
   if(failed.length){ await new Promise(r => setTimeout(r, 2500)); await runPool(failed, 2); } // one gentle retry
   saveCache(); showOnline();
-  if(state.sort === "players") render(); // re-order once the fresh counts are in
+  if(state.sort === "players") keepAnchor(render); // re-order once the fresh counts are in
 }
 
 // Server list: paint the saved copy straight away on repeat visits, then refresh from the README.
@@ -435,9 +444,11 @@ function applyList(data, first){
   S = data; setup();
   if(first) readUrl();
   else { if(!S.some(s => s.region === state.region)) state.region = "all"; $("#region").value = state.region; }
-  render(); showOnline();
+  if(first) render(); else keepAnchor(render);
+  showOnline();
   checks = checks.then(checkAll);
 }
+$("#browse").addEventListener("click", e => { e.preventDefault(); $("#servers").scrollIntoView({block:"start"}); });
 const saved = savedList();
 if(saved) applyList(saved, true);
 else $("#out").innerHTML = '<div class="empty">Loading servers…</div>';
@@ -446,10 +457,10 @@ load().then(data => {
     if(!saved) $("#out").innerHTML = '<div class="empty">Could not load the server list. <a href="https://github.com/itzyongan/asia-pvp-servers">View it on GitHub</a>.</div>';
     return;
   }
-  const fresh = JSON.stringify(data);
-  try{ localStorage.setItem(LIST_KEY, fresh); }catch{}
+  const freshJson = JSON.stringify(data);
+  try{ localStorage.setItem(LIST_KEY, freshJson); }catch{}
   if(!saved) applyList(data, true);
-  else if(fresh !== JSON.stringify(saved)) applyList(data, false);
+  else if(freshJson !== JSON.stringify(saved)) applyList(data, false);
 });
 </script>
 </body>
