@@ -84,6 +84,7 @@ h2:first-child{margin-top:0}
 .chip.u{opacity:.6}
 .status{display:inline-flex;align-items:center;gap:6px}
 .dot{width:9px;height:9px;background:var(--muted)}
+.status.stale{opacity:.5}
 .dot.on{background:var(--grass)}.dot.off{background:var(--no)}
 .copy{padding:8px 16px;font-size:14px;white-space:nowrap;min-width:92px}
 .srv{cursor:pointer;content-visibility:auto;contain-intrinsic-size:auto 76px}
@@ -172,14 +173,14 @@ footer a{color:var(--text)}
 
 <script>
 const $ = s => document.querySelector(s);
-// Live status is remembered in this browser. Recent results (under 5 min) are reused as they are;
-// older ones (up to 1 hour) are shown instantly and refreshed in the background.
-const CACHE_KEY = "as-status-v6", TTL = 5*60*1000, MAX_AGE = 60*60*1000;
-let cacheAge = Infinity;
+// Live status from the last visit (up to 1 hour old) is shown dimmed for an instant first paint.
+// Every page load re-checks every server, and each row brightens once its fresh numbers arrive.
+const CACHE_KEY = "as-status-v6", MAX_AGE = 60*60*1000;
+const fresh = new Set(); // servers whose numbers were refreshed during this page load
 function loadCache(){
   try{
     const c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
-    if(c && Date.now() - c.t < MAX_AGE){ cacheAge = Date.now() - c.t; return c.d; }
+    if(c && Date.now() - c.t < MAX_AGE)return c.d;
   }catch{}
   return {};
 }
@@ -187,7 +188,6 @@ function saveCache(){
   try{
     const ok = Object.fromEntries(Object.entries(state.status).filter(([,v]) => !v.unknown));
     localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:ok}));
-    cacheAge = 0;
   }catch{}
 }
 const state = {mode:"all", q:"", region:"all", sort:"default", status:loadCache()};
@@ -276,32 +276,33 @@ const chip = (label,v) => {
   return `<span class="chip ${c}" title="${label}: ${t}">${label}${v==="l"?" (limited)":""}${v===null?" ?":""}</span>`;
 };
 
+const flash = {}; // per-server button label ("Copied!") kept in data so a row redraw can't wipe it
 function row(s){
   const h = Math.abs(hue(s.ip))%360, st = state.status[s.ip];
-  const status = st===undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
+  let status = st===undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
     : st.unknown ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
     : st.online ? `<span class="status"><span class="dot on"></span>${st.players} online</span>`
     : `<span class="status"><span class="dot off"></span>Offline</span>`;
+  const fl = flash[s.ip], label = fl && fl.until > Date.now() ? fl.text : "Copy IP";
+  const statusHtml = st && !st.unknown && !fresh.has(s.ip) ? status.replace('class="status"','class="status stale"') : status;
   return `<li class="srv ${s.top?"top":""}" data-ip="${esc(s.ip)}">
     <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64" loading="lazy">` : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
     <div>
       <button class="ip" data-ip="${esc(s.ip)}" aria-label="Copy ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
-      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${status}${st?.version ? `<span class="ver" title="${esc(st.motd || st.version)}">${esc(st.version)}</span>` : ""}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
+      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${state.sort === "players" ? `<span>${s.type === "cracked" ? "Cracked" : "Premium"}</span>` : ""}${statusHtml}${st?.version ? `<span class="ver" title="${esc(st.motd || st.version)}">${esc(st.version)}</span>` : ""}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
     </div>
     <div class="modes">${chip("Duels",s.duels)}${chip("FFA",s.ffa)}${chip("Sandbox",s.sandbox)}</div>
-    <button class="btn copy" data-ip="${esc(s.ip)}">Copy IP</button>
+    <button class="btn copy" data-ip="${esc(s.ip)}">${label}</button>
   </li>`;
 }
 
-// Default: top picks first, otherwise README order. Players: most online first, offline/unknown last
-// (ties keep the default order because sorting is stable).
-function cmp(a, b){
-  if(state.sort === "players"){
-    const pa = state.status[a.ip], pb = state.status[b.ip];
-    const na = pa?.online ? pa.players : -1, nb = pb?.online ? pb.players : -1;
-    if(na !== nb) return nb - na;
-  }
-  return b.top - a.top;
+// Default order: top picks first, otherwise README order.
+const byTop = (a, b) => b.top - a.top;
+// Players order ignores every other rule (stars, sections): most online first, offline/unknown last.
+// Ties keep README order because sorting is stable.
+function byPlayers(a, b){
+  const pa = state.status[a.ip], pb = state.status[b.ip];
+  return (pb?.online ? pb.players : -1) - (pa?.online ? pa.players : -1);
 }
 function render(){
   syncUrl();
@@ -310,13 +311,19 @@ function render(){
     (state.mode==="all" || s[state.mode]===1 || s[state.mode]==="l") &&
     (state.region==="all" || s.region===state.region) &&
     (!q || s.ip.toLowerCase().includes(q)));
+  const none = `<div class="empty">No servers match your filters. Clear the search or pick another mode.</div>`;
+  if(state.sort === "players"){
+    $("#out").innerHTML = f.length
+      ? `<h2>Most players</h2><p class="sub">Sorted by players online right now. Premium and cracked servers are mixed.</p><ul class="list">${[...f].sort(byPlayers).map(row).join("")}</ul>`
+      : none;
+    return;
+  }
   const group = (type,title,sub) => {
-    const items = f.filter(s=>s.type===type).sort(cmp);
+    const items = f.filter(s=>s.type===type).sort(byTop);
     return items.length ? `<h2>${title}</h2><p class="sub">${sub}</p><ul class="list">${items.map(row).join("")}</ul>` : "";
   };
   $("#out").innerHTML = (group("premium","Premium servers","Require a paid Minecraft account.") +
-    group("cracked","Cracked servers","Also open to non-premium accounts.")) ||
-    `<div class="empty">No servers match your filters. Clear the search or pick another mode.</div>`;
+    group("cracked","Cracked servers","Also open to non-premium accounts.")) || none;
 }
 
 function setup(){
@@ -349,15 +356,18 @@ async function copyText(text){
 }
 $("#out").addEventListener("click", async e => {
   const card = e.target.closest(".srv"); if(!card) return;
-  if(String(getSelection()).trim()) return; // don't hijack text selection
+  // Only skip when the visitor is selecting text inside this box (never for the IP / Copy IP buttons).
+  if(!e.target.closest(".copy, .ip")){
+    const sel = getSelection();
+    if(String(sel).trim() && sel.anchorNode && card.contains(sel.anchorNode)) return;
+  }
   const ip = card.dataset.ip;
   const ok = await copyText(ip);
-  if(ok){
-    // look the button up fresh: its row may have been redrawn by a status update
-    const btnFor = () => document.querySelector(`.srv[data-ip="${CSS.escape(ip)}"] .copy`);
-    const btn = btnFor(); if(btn) btn.textContent = "Copied!";
-    setTimeout(() => { const b = btnFor(); if(b) b.textContent = "Copy IP"; }, 1400);
-  }
+  flash[ip] = {text: ok ? "Copied!" : "Couldn't copy", until: Date.now() + 1400};
+  const btnFor = () => document.querySelector(`.srv[data-ip="${CSS.escape(ip)}"] .copy`);
+  const setLabel = t => { const b = btnFor(); if(b) b.textContent = t; };
+  setLabel(flash[ip].text);
+  setTimeout(() => { if(Date.now() >= flash[ip].until) setLabel("Copy IP"); }, 1450);
 });
 
 // Live status. Primary source: mcstatus.io (fast). If it fails, or says "offline", mcsrvstat.us double-checks.
@@ -396,6 +406,7 @@ async function lookup(ip){
 }
 async function ping(s){
   const r = await lookup(s.ip);
+  if(r) fresh.add(s.ip);
   if(r) state.status[s.ip] = {...r, version: r.version ? String(r.version).slice(0, 40) : null, motd: r.motd ? String(r.motd).slice(0, 140) : null};
   else if(!state.status[s.ip] || state.status[s.ip].unknown) state.status[s.ip] = {unknown:true};
   // Redraw from the CURRENT list: if the README refresh replaced the saved list while this lookup
@@ -413,9 +424,8 @@ async function runPool(list, n){
   await Promise.all(Array.from({length:n}, async () => { while(queue.length) await ping(queue.shift()); }));
 }
 async function checkAll(){
-  const stale = cacheAge >= TTL;
-  await runPool(S.filter(s => stale || !state.status[s.ip]), 6);
-  const failed = S.filter(s => state.status[s.ip]?.unknown);
+  await runPool(S.filter(s => !fresh.has(s.ip)), 6);
+  const failed = S.filter(s => !fresh.has(s.ip));
   if(failed.length){ await new Promise(r => setTimeout(r, 2500)); await runPool(failed, 2); } // one gentle retry
   saveCache(); showOnline();
   if(state.sort === "players") render(); // re-order once the fresh counts are in
