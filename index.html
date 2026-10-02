@@ -11,9 +11,6 @@
 <meta name="twitter:card" content="summary">
 <meta property="og:title" content="AS Servers | Asia Minecraft PvP Server List">
 <meta property="og:description" content="Find low-ping Asia Minecraft PvP servers. Click an IP to copy it.">
-<!-- Vercel Web Analytics (turn it on under Project > Analytics in the Vercel dashboard) -->
-<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
-<script defer src="/_vercel/insights/script.js"></script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%235fa83a'/%3E%3Crect y='5' width='16' height='11' fill='%238a5a33'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -292,7 +289,7 @@ function row(s){
     <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64" loading="lazy">` : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
     <div>
       <button class="ip" data-ip="${esc(s.ip)}" aria-label="Copy ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
-      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${state.sort === "players" ? `<span>${s.type === "cracked" ? "Cracked" : "Premium"}</span>` : ""}${statusHtml}${st?.version ? `<span class="ver" title="${esc(st.motd || st.version)}">${esc(st.version)}</span>` : ""}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
+      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${statusHtml}${st?.version ? `<span class="ver" title="${esc(st.motd || st.version)}">${esc(st.version)}</span>` : ""}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
     </div>
     <div class="modes">${chip("Duels",s.duels)}${chip("FFA",s.ffa)}${chip("Sandbox",s.sandbox)}</div>
     <button class="btn copy" data-ip="${esc(s.ip)}">${label}</button>
@@ -301,7 +298,7 @@ function row(s){
 
 // Default order: top picks first, otherwise README order.
 const byTop = (a, b) => b.top - a.top;
-// Players order ignores every other rule (stars, sections): most online first, offline/unknown last.
+// Players order ignores stars: most online first, offline/unknown last, inside each section.
 // Ties keep README order because sorting is stable.
 function byPlayers(a, b){
   const pa = state.status[a.ip], pb = state.status[b.ip];
@@ -315,14 +312,8 @@ function render(){
     (state.region==="all" || s.region===state.region) &&
     (!q || s.ip.toLowerCase().includes(q)));
   const none = `<div class="empty">No servers match your filters. Clear the search or pick another mode.</div>`;
-  if(state.sort === "players"){
-    $("#out").innerHTML = f.length
-      ? `<h2>Most players</h2><p class="sub">Sorted by players online right now. Premium and cracked servers are mixed.</p><ul class="list">${[...f].sort(byPlayers).map(row).join("")}</ul>`
-      : none;
-    return;
-  }
   const group = (type,title,sub) => {
-    const items = f.filter(s=>s.type===type).sort(byTop);
+    const items = f.filter(s=>s.type===type).sort(state.sort === "players" ? byPlayers : byTop);
     return items.length ? `<h2>${title}</h2><p class="sub">${sub}</p><ul class="list">${items.map(row).join("")}</ul>` : "";
   };
   $("#out").innerHTML = (group("premium","Premium servers","Require a paid Minecraft account.") +
