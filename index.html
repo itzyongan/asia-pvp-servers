@@ -99,7 +99,51 @@ footer{border-top:4px solid #000;padding:24px 0 40px;color:var(--muted);font-siz
 footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
 footer a{color:var(--text)}
 
+/* server pop-up */
+dialog{padding:0;border:3px solid #000;background:var(--stone);color:var(--text);width:min(560px,calc(100% - 24px));max-width:none;max-height:calc(100% - 24px);margin:auto;overflow:hidden}
+dialog[open]{display:flex;flex-direction:column}
+dialog::backdrop{background:rgba(0,0,0,.72)}
+body:has(dialog[open]){overflow:hidden}
+@media (prefers-reduced-motion:no-preference){dialog[open]{animation:dlgin .15s ease-out}@keyframes dlgin{from{opacity:0;transform:translateY(10px)}}}
+.dh{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:3px solid #000;background:var(--stone-hi)}
+.dh .icon{width:48px;height:48px;flex:none;font-size:20px}
+.dt{flex:1;min-width:0}
+.dt h3{font:700 19px/1.25 var(--px);overflow-wrap:anywhere}
+.ds{display:flex;flex-wrap:wrap;align-items:center;gap:2px 14px;color:var(--muted);font-size:13.5px;margin-top:2px}
+.dh .x{padding:6px 12px;font-size:14px;flex:none}
+.db{padding:16px;overflow-y:auto;display:grid;gap:18px;align-content:start}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.tile{background:#111317;border:2px solid var(--line);padding:10px 12px;min-width:0}
+.tile span{display:block;color:var(--muted);font-size:12.5px}
+.tile b{display:block;font:700 17px/1.35 var(--px);overflow-wrap:anywhere}
+.tile b.ok{color:#bfe8a6}.tile b.bad{color:#f0b3b4}.tile b.mut{color:var(--muted)}
+.dnote{color:var(--muted);font-size:14px}
+.dnote a{color:var(--diamond);text-underline-offset:3px}
+.btn:disabled{opacity:.5;cursor:default;filter:none}
+.pingbox{display:flex;align-items:center;gap:12px;background:#111317;border:2px solid var(--line);padding:10px 12px}
+.pingbox .pv{flex:1;min-width:0}
+.pingbox span{display:block;color:var(--muted);font-size:12.5px}
+.pingbox b{display:block;font:700 22px/1.3 var(--px)}
+.pingbox b.ok{color:#bfe8a6}.pingbox b.bad{color:#f0b3b4}.pingbox b.mut{color:var(--muted)}
+.pingbox .btn{padding:8px 14px;font-size:13.5px;white-space:nowrap;flex:none}
+.dsec{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font:700 15px var(--px);color:var(--gold);margin-bottom:8px}
+.dsec a{font:400 13px var(--body);color:var(--diamond);text-underline-offset:3px}
+.kv{background:#111317;border:2px solid var(--line);padding:2px 14px}
+.kr{display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:2px 16px;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
+.kr:first-child{border-top:0}
+.kr>span{color:var(--muted)}
+.kr>b{font-weight:500;text-align:right;min-width:0;overflow-wrap:anywhere}
+.kr small{grid-column:1/-1;text-align:right;color:var(--muted);font-size:12.5px}
+.kr small a{color:var(--diamond);text-underline-offset:3px}
+.kr b a{color:var(--diamond);text-underline-offset:3px}
+.df{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:3px solid #000;background:var(--stone-hi);font-size:14px}
+.fl{display:flex;flex-wrap:wrap;gap:4px 16px;min-width:0}
+.df a{color:var(--diamond);text-underline-offset:3px}
+.df .copy{min-width:112px}
 @media (max-width:640px){
+  dialog{margin:auto 0 0;width:100%;max-height:92%;border-width:3px 0 0}
+  .df{flex-direction:row-reverse}
+  .df .copy{flex:1}
   header.hero{padding:48px 0 36px}
   .srv{grid-template-columns:44px 1fr;gap:12px}
   .icon{width:44px;height:44px;font-size:18px}
@@ -169,6 +213,19 @@ footer a{color:var(--text)}
     <span>Player counts from <a href="https://mcstatus.io" target="_blank" rel="noopener">mcstatus.io</a> and <a href="https://mcsrvstat.us" target="_blank" rel="noopener">mcsrvstat.us</a>.</span>
   </div>
 </footer>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <div class="dh">
+    <div class="icon" id="dlg-icon" aria-hidden="true"></div>
+    <div class="dt"><h3 id="dlg-title"></h3><div class="ds" id="dlg-sub"></div></div>
+    <button class="btn alt x" id="dlg-close" type="button" aria-label="Close">✕</button>
+  </div>
+  <div class="db" id="dlg-body"></div>
+  <div class="df">
+    <div class="fl"><a id="dlg-ext" href="#" target="_blank" rel="noopener">Server debug</a><a id="dlg-geo" href="#" target="_blank" rel="noopener">IP lookup</a></div>
+    <button class="btn copy" id="dlg-copy" type="button">Copy IP</button>
+  </div>
+</dialog>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -287,7 +344,7 @@ function rowInner(s){
   return `
     <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64" loading="lazy">` : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
     <div>
-      <button class="ip" data-ip="${esc(s.ip)}" aria-label="Copy ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
+      <button class="ip" data-ip="${esc(s.ip)}" aria-label="Show info for ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
       <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${statusHtml}${st?.version ? `<span class="ver" title="${esc(st.motd || st.version)}">${esc(st.version)}</span>` : ""}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
     </div>
     <div class="modes">${chip("Duels",s.duels)}${chip("FFA",s.ffa)}${chip("Sandbox",s.sandbox)}</div>
@@ -357,20 +414,208 @@ async function copyText(text){
     const ok = document.execCommand("copy"); ta.remove(); return ok;
   }catch{ return false; }
 }
-$("#out").addEventListener("click", async e => {
-  const card = e.target.closest(".srv"); if(!card) return;
-  // Only skip when the visitor is selecting text inside this box (never for the IP / Copy IP buttons).
-  if(!e.target.closest(".copy, .ip")){
-    const sel = getSelection();
-    if(String(sel).trim() && sel.anchorNode && card.contains(sel.anchorNode)) return;
-  }
-  const ip = card.dataset.ip;
+async function copyIp(ip, btn){
   const ok = await copyText(ip);
   flash[ip] = {text: ok ? "Copied!" : "Couldn't copy", until: Date.now() + 1400};
-  const btnFor = () => document.querySelector(`.srv[data-ip="${CSS.escape(ip)}"] .copy`);
-  const setLabel = t => { const b = btnFor(); if(b) b.textContent = t; };
-  setLabel(flash[ip].text);
-  setTimeout(() => { if(Date.now() >= flash[ip].until) setLabel("Copy IP"); }, 1450);
+  const set = t => {
+    const b = btn.isConnected ? btn : document.querySelector(`.srv[data-ip="${CSS.escape(ip)}"] .copy`);
+    if(b) b.textContent = t;
+  };
+  set(flash[ip].text);
+  setTimeout(() => { if(Date.now() >= flash[ip].until) set("Copy IP"); }, 1450);
+}
+
+// ---- Server pop-up ----
+const dlg = $("#dlg"); let dlgIp = null;
+const pingUi = {}, pingCache = {}, pingBusy = {}, infoUi = {}, targetP = {};
+
+// Your ipgeolocation.io API key (https://app.ipgeolocation.io/signup). With no key the pop-up falls back
+// to a free lookup with fewer details. Note: the key is visible to anyone who views the page source.
+const IPGEO_KEY = "";
+
+// Uptime figures (percent) found on public server-list pages. Add more as you find them.
+const UPTIME = {
+  "as.catpvp.xyz": 100,
+  "mcpvp.com": 100
+};
+
+// Resolved address of the server. The page's own status checks already know it, so no extra request is needed.
+function target(ip){
+  const st = state.status[ip];
+  if(st?.addr) return Promise.resolve({addr: st.addr, host: st.addr, port: st.port || 25565});
+  return targetP[ip] ??= getJson(`https://api.mcstatus.io/v2/status/java/${encodeURIComponent(ip)}?query=false&timeout=4`, 7000)
+    .then(d => ({addr: d.ip_address || null, host: d.ip_address || d.srv_record?.host || d.host || ip, port: d.srv_record?.port || d.port || 25565}))
+    .catch(e => { delete targetP[ip]; throw e; });
+}
+
+// Rough latency from the visitor's browser. Browsers can't open raw TCP, so we time connection attempts that the
+// server rejects right after the TCP handshake. That costs the handshake plus one more round trip, so the raw
+// time is about two round trips. If estimates are consistently off, tune these two numbers.
+const PING_SCALE = 0.5;  // share of the raw time that counts as one round trip
+const PING_OFFSET = 0;   // milliseconds removed after scaling (browser overhead)
+const pingBest = {};
+const hostOf = host => host.includes(":") ? `[${host}]` : host;
+async function fetchSample(host, port){
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 2000);
+  const t0 = performance.now();
+  try{
+    await fetch(`https://${hostOf(host)}:${port}/?_=${Math.random().toString(36).slice(2)}`, {mode:"no-cors", cache:"no-store", credentials:"omit", referrerPolicy:"no-referrer", signal:ctl.signal});
+  }catch(e){ if(e.name === "AbortError") return null; }
+  finally{ clearTimeout(timer); }
+  const dt = performance.now() - t0;
+  return dt < 4 ? null : dt; // instant failures (blocked port, extension) say nothing about the network
+}
+// Second, independent probe through the WebSocket stack (it skips fetch's own overhead).
+function wsSample(host, port){
+  return new Promise(resolve => {
+    let ws, done = false, timer;
+    const t0 = performance.now();
+    const end = ok => {
+      if(done) return; done = true; clearTimeout(timer);
+      try{ ws.close(); }catch{}
+      const dt = performance.now() - t0;
+      resolve(ok && dt >= 4 ? dt : null);
+    };
+    try{ ws = new WebSocket(`wss://${hostOf(host)}:${port}/`); }catch{ resolve(null); return; }
+    timer = setTimeout(() => end(false), 2000);
+    ws.onerror = () => end(true); ws.onclose = () => end(true); ws.onopen = () => end(false);
+  });
+}
+async function measurePing(ip, force){
+  if(pingBusy[ip]) return;
+  const hit = pingCache[ip];
+  if(!force && hit && Date.now() - hit.t < 60000){ pingUi[ip] = hit.v; return; }
+  pingBusy[ip] = true; pingUi[ip] = {state:"measuring"};
+  if(dlgIp === ip) renderInfo();
+  let v = {state:"error"};
+  try{
+    const t = await target(ip);
+    const runs = await Promise.all([
+      ...[0, 1, 2].map(() => fetchSample(t.host, t.port)),
+      ...[0, 1, 2].map(() => wsSample(t.host, t.port))
+    ]);
+    const f = runs.slice(0, 3).filter(Boolean), w = runs.slice(3).filter(Boolean);
+    const prev = pingBest[ip] && Date.now() - pingBest[ip].t < 10 * 60 * 1000 ? pingBest[ip] : {f: Infinity, w: Infinity};
+    const best = pingBest[ip] = {t: Date.now(), f: Math.min(prev.f, ...f), w: Math.min(prev.w, ...w)}; // noise only adds time, so the fastest sample is the closest
+    const raw = Math.min(best.f, best.w), fmt = x => Number.isFinite(x) ? Math.round(x) + " ms" : "n/a";
+    if(Number.isFinite(raw)) v = {state:"done", ms: Math.max(1, Math.round(raw * PING_SCALE - PING_OFFSET)),
+      raw: `Raw connection time ${fmt(raw)} (fetch ${fmt(best.f)}, websocket ${fmt(best.w)}), scaled by ${PING_SCALE}`};
+  }catch{}
+  pingCache[ip] = {t: Date.now(), v}; pingUi[ip] = v; pingBusy[ip] = false;
+  if(dlgIp === ip) renderInfo();
+}
+
+// Network info for the server's IP address, cached for 30 days in this browser so each IP is looked up once.
+const NET_KEY = "as-net-v2", NET_AGE = 30*24*60*60*1000;
+const netMap = () => { try{ return JSON.parse(localStorage.getItem(NET_KEY) || "{}") || {}; }catch{ return {}; } };
+async function fromIpgeolocation(addr){
+  const d = await getJson(`https://api.ipgeolocation.io/v3/ipgeo?apiKey=${encodeURIComponent(IPGEO_KEY)}&ip=${encodeURIComponent(addr)}`, 8000);
+  const l = d.location || {};
+  if(!l.country_code2) throw new Error("no data");
+  return {src: "ig", city: l.city || "", region: l.state_prov || "", cc: l.country_code2,
+    asn: d.asn?.as_number ? String(d.asn.as_number).replace(/^AS/i, "") : "", asnOrg: d.asn?.organization || "",
+    tz: d.time_zone?.name || "", company: d.company?.name || "", net: d.network?.route || ""};
+}
+async function fromFallback(addr){
+  const d = await getJson(`https://ipwho.is/${encodeURIComponent(addr)}`, 6000);
+  if(d.success === false || !d.country_code) throw new Error("no data");
+  return {src: "iw", city: d.city || "", region: d.region || "", cc: d.country_code,
+    asn: d.connection?.asn ? String(d.connection.asn) : "", asnOrg: d.connection?.isp || d.connection?.org || "",
+    tz: d.timezone?.id || "", company: "", net: ""};
+}
+// The announced network prefix. ipgeolocation.io only includes it on paid plans, so RIPEstat fills the gap.
+async function fromRipe(addr){
+  const d = await getJson(`https://stat.ripe.net/data/prefix-overview/data.json?resource=${encodeURIComponent(addr)}&sourceapp=asia-pvp-servers`, 6000);
+  const r = d?.data?.resource;
+  return typeof r === "string" && r.includes("/") && d.data.announced !== false ? r : "";
+}
+async function loadNet(ip){
+  if(infoUi[ip]?.state === "done" || infoUi[ip]?.state === "loading") return;
+  const want = IPGEO_KEY ? "ig" : "iw", c = netMap()[ip];
+  if(c && c.v?.src === want && Date.now() - c.t < NET_AGE){ infoUi[ip] = {state:"done", v:c.v}; return; }
+  infoUi[ip] = {state:"loading"};
+  try{
+    const t = await target(ip); if(!t.addr) throw new Error("no address");
+    let v;
+    if(IPGEO_KEY){ try{ v = await fromIpgeolocation(t.addr); }catch{ v = await fromFallback(t.addr); } }
+    else v = await fromFallback(t.addr);
+    if(!v.net){ try{ v.net = await fromRipe(t.addr); }catch{ v.net = ""; } }
+    infoUi[ip] = {state:"done", v};
+    try{ const m = netMap(); m[ip] = {t: Date.now(), v}; localStorage.setItem(NET_KEY, JSON.stringify(m)); }catch{}
+  }catch{ infoUi[ip] = {state:"error"}; }
+  if(dlgIp === ip) renderInfo();
+}
+
+const kvRow = (k, v) => `<div class="kr"><span>${k}</span><b>${v}</b></div>`;
+function renderInfo(){
+  const s = S.find(x => x.ip === dlgIp); if(!s) return;
+  const st = state.status[s.ip], h = Math.abs(hue(s.ip)) % 360;
+  const ic = $("#dlg-icon");
+  ic.style.background = `hsl(${h} 35% 32%)`;
+  ic.innerHTML = st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64">` : esc(s.ip.replace(/^(as|play)\./, "")[0].toUpperCase());
+  const stale = st && !st.unknown && !fresh.has(s.ip) ? " stale" : "";
+  const status = st === undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
+    : st.unknown ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
+    : st.online ? `<span class="status${stale}"><span class="dot on"></span>Online · ${st.players} player${st.players === 1 ? "" : "s"}</span>`
+    : `<span class="status${stale}"><span class="dot off"></span>Offline</span>`;
+  $("#dlg-title").textContent = s.ip;
+  $("#dlg-sub").innerHTML = `<span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${status}`;
+  $("#dlg-ext").href = `https://mcsrvstat.us/server/${encodeURIComponent(s.ip)}`;
+  $("#dlg-geo").href = `https://ipgeolocation.io/what-is-my-ip/${encodeURIComponent(s.ip)}`;
+
+  const p = pingUi[s.ip] || {state:"measuring"}, busy = p.state === "measuring";
+  const pv = p.state === "done" ? `≈ ${p.ms} ms` : p.state === "error" ? "Unavailable" : "Measuring…";
+  const pcls = p.state === "done" ? (p.ms < 60 ? "ok" : p.ms < 120 ? "" : "bad") : "mut";
+  const pnote = p.state === "done" ? "Rough estimate of the round trip from your browser to the server. In-game ping can differ."
+    : p.state === "error" ? "Couldn't measure from your browser. The server or a browser extension may be blocking the test."
+    : "Testing the connection from your browser…";
+
+  const ver = st && !st.unknown && st.version ? esc(st.version) : "–";
+  const up = UPTIME[s.ip];
+  const n = infoUi[s.ip], v = n?.state === "done" ? n.v : null, wait = !n || n.state === "loading";
+  const loc = v ? `${flagOf(v.cc)} ${esc([v.city, v.region, v.cc].filter(Boolean).join(", "))}` : wait ? "Locating…" : "Unavailable";
+  const asn = v?.asn ? `<a href="https://ipgeolocation.io/browse/asn/AS${esc(v.asn)}" target="_blank" rel="noopener">AS${esc(v.asn)}</a>${v.asnOrg ? ` — ${esc(v.asnOrg)}` : ""}` : "";
+  const netLink = v?.net ? kvRow("Network", v.net.includes(":") ? esc(v.net) : `<a href="https://ipgeolocation.io/browse/ipv4/${esc(v.net)}" target="_blank" rel="noopener">${esc(v.net)}</a>`) : "";
+  const net = v ? (asn ? kvRow("ASN", asn) : "") + netLink + (v.tz ? kvRow("Timezone", esc(v.tz)) : "") + (v.company ? kvRow("Company", esc(v.company)) : "")
+    : wait ? kvRow("ASN", "…") + kvRow("Network", "…") + kvRow("Timezone", "…") : "";
+
+  const box = $("#dlg-body"), top = box.scrollTop;
+  box.innerHTML = `
+    <div><div class="pingbox"><div class="pv"><span>Ping (estimate)</span><b class="${pcls}"${p.raw ? ` title="${esc(p.raw)}"` : ""}>${pv}</b></div>
+      <button class="btn alt" type="button" data-act="repeat"${busy ? " disabled" : ""}>Re-estimate</button></div>
+      <p class="dnote" style="margin-top:8px">${pnote}</p></div>
+    <div><div class="dsec"><span>Information</span><a href="https://namemc.com/server/${encodeURIComponent(s.ip)}" target="_blank" rel="noopener">View on NameMC</a></div>
+      <div class="kv">${kvRow("Version", ver)}${kvRow("Uptime", up === undefined ? "No data" : `${up.toFixed(1)}%`)}${kvRow("Location", loc)}${net}</div></div>`;
+  box.scrollTop = top;
+}
+
+function openInfo(ip){
+  if(!S.some(x => x.ip === ip)) return;
+  dlgIp = ip;
+  $("#dlg-copy").textContent = "Copy IP";
+  const hit = pingCache[ip];
+  if(hit && Date.now() - hit.t < 60000) pingUi[ip] = hit.v;
+  renderInfo();
+  if(!dlg.open) dlg.showModal();
+  measurePing(ip);
+  loadNet(ip);
+}
+$("#dlg-body").addEventListener("click", e => {
+  if(e.target.closest("[data-act=repeat]") && dlgIp) measurePing(dlgIp, true);
+});
+$("#dlg-close").addEventListener("click", () => dlg.close());
+$("#dlg-copy").addEventListener("click", e => dlgIp && copyIp(dlgIp, e.currentTarget));
+dlg.addEventListener("click", e => { if(e.target === dlg) dlg.close(); }); // click on the backdrop
+dlg.addEventListener("close", () => { dlgIp = null; });
+
+// Click a server box to open its pop-up. The Copy IP button still copies directly.
+$("#out").addEventListener("click", e => {
+  const card = e.target.closest(".srv"); if(!card) return;
+  const ip = card.dataset.ip, btn = e.target.closest(".copy");
+  if(btn){ copyIp(ip, btn); return; }
+  const sel = getSelection(); // don't open while the visitor is selecting text
+  if(String(sel).trim() && sel.anchorNode && card.contains(sel.anchorNode)) return;
+  openInfo(ip);
 });
 
 // Live status. Primary source: mcstatus.io (fast). If it fails, or says "offline", mcsrvstat.us double-checks.
@@ -390,7 +635,8 @@ async function lookupMcstatus(ip){
   return {
     online: !!d.online, players: num(d.players?.online), icon: dataIcon(d.icon),
     version: v?.name_clean ?? v?.name?.clean ?? (typeof v?.name === "string" ? v.name : null),
-    motd: typeof d.motd?.clean === "string" ? d.motd.clean : null
+    motd: typeof d.motd?.clean === "string" ? d.motd.clean : null,
+    addr: d.ip_address || null, port: d.srv_record?.port || d.port || null
   };
 }
 async function lookupMcsrvstat(ip){
@@ -417,6 +663,7 @@ async function ping(s){
   const cur = S.find(x => x.ip === s.ip);
   const li = document.querySelector(`.srv[data-ip="${CSS.escape(s.ip)}"]`);
   if(li && cur) li.innerHTML = rowInner(cur);
+  if(dlgIp === s.ip) renderInfo();
 }
 function showOnline(){
   const on = S.filter(s => state.status[s.ip]?.online);
