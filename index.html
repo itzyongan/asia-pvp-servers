@@ -486,6 +486,10 @@ function wsSample(host, port){
 // Example: "https://asia-pvp-ping.your-name.workers.dev"
 // Add ?pingdebug to the page address to show the ping breakdown under the ping in the pop-up.
 const PING_DEBUG = /[?&]pingdebug\b/.test(location.search);
+// Servers behind Cloudflare can't be reached by the Worker, so this Vercel function (api/ping.js) measures them with a
+// real Minecraft ping instead. Leave empty to skip it and use the browser-only test for those servers.
+const PING_RELAY = "/api/ping";
+const relayBest = {};
 const PING_WORKER = "https://asia-pvp-servers.itzyongan.workers.dev";
 const workerBest = {};
 // Every open runs a new measurement, but each leg keeps the lowest value seen within this window. Delays only add time,
@@ -560,7 +564,22 @@ async function measurePing(ip, force){
     if(PING_WORKER){
       try{
         const m = await viaWorker(ip);
-        if(m.cloudflare){ cf = true; bound = m.vw; }
+        if(m.cloudflare){
+          cf = true; bound = m.vw;
+          if(PING_RELAY){
+            try{
+              const r = await fetch(`${PING_RELAY}?name=${encodeURIComponent(ip)}`, {cache:"no-store", signal: AbortSignal.timeout(9000)});
+              const j = await r.json();
+              if(r.ok && j.ok){
+                const eo = Math.max(0, j.ping - j.connect); // the part of the Minecraft ping that goes on past Cloudflare to the real server
+                const prev = relayBest[ip] && Date.now() - relayBest[ip].t < BEST_WINDOW ? relayBest[ip] : {vw: Infinity, eo: Infinity};
+                const b = relayBest[ip] = {t: Date.now(), vw: Math.min(prev.vw, m.vw), eo: Math.min(prev.eo, eo)};
+                v = {state:"done", via:"relay", cf:true, ms: Math.max(1, Math.round(b.vw + b.eo - PING_OFFSET)),
+                  raw: `Behind Cloudflare. You to Cloudflare: ${Math.round(b.vw)} ms + Cloudflare to server: ${Math.round(b.eo)} ms (measured with a Minecraft ping)`};
+              }
+            }catch{} // relay not deployed or failed: browser-only test below
+          }
+        }
         else{
           const prev = workerBest[ip] && Date.now() - workerBest[ip].t < BEST_WINDOW ? workerBest[ip] : {vw: Infinity, ws: Infinity};
           const b = workerBest[ip] = {t: Date.now(), vw: Math.min(prev.vw, m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
@@ -644,7 +663,7 @@ function renderInfo(){
   const p = pingUi[s.ip] || {state:"measuring"}, busy = p.state === "measuring";
   const pv = p.state === "done" ? `≈ ${p.ms} ms` : p.state === "error" ? "Unavailable" : "Measuring…";
   const pcls = p.state === "done" ? (p.ms < 60 ? "ok" : p.ms < 120 ? "" : "bad") : "mut";
-  const pnote = p.state === "done" ? (p.cf ? "This server is behind Cloudflare, so it can only be estimated from your browser. In-game ping can differ." : p.via === "worker" ? "Estimated from your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly." : "Rough estimate of the round trip from your browser to the server. In-game ping can differ.")
+  const pnote = p.state === "done" ? (p.via === "relay" ? "Behind Cloudflare: your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly." : p.cf ? "This server is behind Cloudflare, so it can only be estimated from your browser. In-game ping can differ." : p.via === "worker" ? "Estimated from your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly." : "Rough estimate of the round trip from your browser to the server. In-game ping can differ.")
     : p.state === "error" ? "Couldn't measure from your browser. The server or a browser extension may be blocking the test."
     : "Testing the connection from your browser…";
 
