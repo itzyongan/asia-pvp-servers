@@ -15,8 +15,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://api.mcstatus.io" crossorigin>
-<link rel="preconnect" href="https://api.mcsrvstat.us" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap">
+<link rel="preconnect" href="https://asia-pvp-servers.itzyongan.workers.dev" crossorigin>
+<script>
+// One request to the Worker returns every server's status. Starting it here lets it run while the page and README load.
+var AS_WORKER = "https://asia-pvp-servers.itzyongan.workers.dev";
+window.__status = fetch(AS_WORKER + "/status").then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
+</script>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap"></noscript>
 <style>
 :root{
   --deepslate:#1a1d22; --stone:#262a31; --stone-hi:#323843; --line:#3b424e;
@@ -233,7 +239,7 @@ body:has(dialog[open]){overflow:hidden}
 const $ = s => document.querySelector(s);
 // Live status from the last visit (up to 1 hour old) is shown dimmed for an instant first paint.
 // Every page load re-checks every server, and each row brightens once its fresh numbers arrive.
-const CACHE_KEY = "as-status-v6", MAX_AGE = 60*60*1000;
+const CACHE_KEY = "as-status-v7", MAX_AGE = 60*60*1000;
 const fresh = new Set(); // servers whose numbers were refreshed during this page load
 function loadCache(){
   try{
@@ -344,7 +350,7 @@ function rowInner(s){
   const fl = flash[s.ip], label = fl && fl.until > Date.now() ? fl.text : "Copy IP";
   const statusHtml = st && !st.unknown && !fresh.has(s.ip) ? status.replace('class="status"','class="status stale"') : status;
   return `
-    <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64" loading="lazy">` : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
+    <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64" loading="lazy" data-l="${esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}" onerror="this.replaceWith(this.dataset.l)">` : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
     <div>
       <button class="ip" data-ip="${esc(s.ip)}" aria-label="Show info for ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
       <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${statusHtml}${st?.version ? `<span class="ver" title="${esc(st.motd || st.version)}">${esc(st.version)}</span>` : ""}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
@@ -493,7 +499,7 @@ let showDebug = /[?&]pingdebug\b/.test(location.search) || (() => { try{ return 
 // real Minecraft ping instead. Leave empty to skip it and use the browser-only test for those servers.
 const PING_RELAY = "/api/ping";
 const relayBest = {};
-const PING_WORKER = "https://asia-pvp-servers.itzyongan.workers.dev";
+const PING_WORKER = AS_WORKER;
 const workerBest = {};
 // Your round trip to Cloudflare doesn't depend on which server you open, so every measurement shares one floor for it.
 // A slow moment while the page is busy then can't inflate the next server's number.
@@ -524,9 +530,11 @@ async function viaWorker(ip){
     return {r, body, wire: Math.max(1, Math.min(wire, dt))};
   };
   await get("/rtt");                                  // opens the connection, so the next ones time one round trip
+  const tcp = get(`/tcp?name=${encodeURIComponent(ip)}`); // runs while we time the round trips
+  tcp.catch(() => {});
   const xs = [];
   for(let i = 0; i < 8; i++) xs.push((await get("/rtt")).wire);
-  const {r, body} = await get(`/tcp?name=${encodeURIComponent(ip)}`);
+  const {r, body} = await tcp;
   let j = {}; try{ j = JSON.parse(body); }catch{}
   const vw = Math.min(...xs);
   if(j.cloudflare) return {vw, cloudflare: true};    // the Worker can't connect to servers behind Cloudflare
@@ -659,7 +667,7 @@ function renderInfo(){
   const st = state.status[s.ip], h = Math.abs(hue(s.ip)) % 360;
   const ic = $("#dlg-icon");
   ic.style.background = `hsl(${h} 35% 32%)`;
-  ic.innerHTML = st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64">` : esc(s.ip.replace(/^(as|play)\./, "")[0].toUpperCase());
+  ic.innerHTML = st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64" data-l="${esc(s.ip.replace(/^(as|play)\./, "")[0].toUpperCase())}" onerror="this.replaceWith(this.dataset.l)">` : esc(s.ip.replace(/^(as|play)\./, "")[0].toUpperCase());
   const stale = st && !st.unknown && !fresh.has(s.ip) ? " stale" : "";
   const status = st === undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
     : st.unknown ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
@@ -783,8 +791,28 @@ async function runPool(list, n){
   const queue = [...list];
   await Promise.all(Array.from({length:n}, async () => { while(queue.length) await ping(queue.shift()); }));
 }
+// The Worker answers for every server in one go (cached at the edge), so rows fill in almost at once.
+async function loadWorkerStatus(){
+  if(!PING_WORKER) return;
+  const early = window.__status; window.__status = null; // the request started in <head> is used once
+  const j = await (early || fetch(PING_WORKER + "/status").then(r => r.ok ? r.json() : null).catch(() => null));
+  if(!j || !j.s) return;
+  let n = 0;
+  for(const s of S){
+    const x = j.s[s.ip]; if(!x) continue;
+    state.status[s.ip] = {
+      online: !!x.online, players: num(x.players),
+      icon: x.icon ? `https://api.mcstatus.io/v2/icon/${encodeURIComponent(s.ip)}` : null,
+      version: x.version ? String(x.version).slice(0, 40) : null, motd: x.motd ? String(x.motd).slice(0, 140) : null,
+      addr: x.addr || null, port: x.port || null
+    };
+    fresh.add(s.ip); n++;
+  }
+  if(n) keepAnchor(render); // one redraw for all rows
+}
 async function checkAll(){
-  await runPool(S.filter(s => !fresh.has(s.ip)), 6);
+  await loadWorkerStatus();
+  await runPool(S.filter(s => !fresh.has(s.ip)), 6); // anything the Worker couldn't tell is looked up directly
   const failed = S.filter(s => !fresh.has(s.ip));
   if(failed.length){ await new Promise(r => setTimeout(r, 2500)); await runPool(failed, 2); } // one gentle retry
   saveCache(); showOnline();
