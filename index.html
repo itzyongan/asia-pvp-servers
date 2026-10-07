@@ -456,49 +456,12 @@ function target(ip){
     .catch(e => { delete targetP[ip]; throw e; });
 }
 
-// Rough latency from the visitor's browser. Browsers can't open raw TCP, so we time connection attempts that the
-// server rejects right after the TCP handshake. That costs the handshake plus one more round trip, so the raw
-// time is about two round trips. If estimates are consistently off, tune these two numbers.
-const PING_SCALE = 0.5;  // share of the raw time that counts as one round trip
-const PING_OFFSET = 0;   // milliseconds removed after scaling (browser overhead)
-const pingBest = {};
-const hostOf = host => host.includes(":") ? `[${host}]` : host;
-async function fetchSample(host, port){
-  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 2000);
-  const t0 = performance.now();
-  try{
-    await fetch(`https://${hostOf(host)}:${port}/?_=${Math.random().toString(36).slice(2)}`, {mode:"no-cors", cache:"no-store", credentials:"omit", referrerPolicy:"no-referrer", signal:ctl.signal});
-  }catch(e){ if(e.name === "AbortError") return null; }
-  finally{ clearTimeout(timer); }
-  const dt = performance.now() - t0;
-  return dt < 4 ? null : dt; // instant failures (blocked port, extension) say nothing about the network
-}
-// Second, independent probe through the WebSocket stack (it skips fetch's own overhead).
-function wsSample(host, port){
-  return new Promise(resolve => {
-    let ws, done = false, timer;
-    const t0 = performance.now();
-    const end = ok => {
-      if(done) return; done = true; clearTimeout(timer);
-      try{ ws.close(); }catch{}
-      const dt = performance.now() - t0;
-      resolve(ok && dt >= 4 ? dt : null);
-    };
-    try{ ws = new WebSocket(`wss://${hostOf(host)}:${port}/`); }catch{ resolve(null); return; }
-    timer = setTimeout(() => end(false), 2000);
-    ws.onerror = () => end(true); ws.onclose = () => end(true); ws.onopen = () => end(false);
-  });
-}
-// Better estimate through your Cloudflare Worker (see worker.js): the Worker times a clean TCP connection from
-// Cloudflare's edge to the server, and we add our own round trip to that edge. Leave empty to use the browser-only test.
-// Example: "https://asia-pvp-ping.your-name.workers.dev"
 // "Show debug" under the ping reveals how it was measured. It is remembered, and ?pingdebug in the address starts it open.
 const DEBUG_KEY = "as-pingdebug-v1";
 let showDebug = /[?&]pingdebug\b/.test(location.search) || (() => { try{ return localStorage.getItem(DEBUG_KEY) === "1"; }catch{ return false; } })();
-// Servers behind Cloudflare can't be reached by the Worker, so this Vercel function (api/ping.js) measures them with a
-// real Minecraft ping instead. Leave empty to skip it and use the browser-only test for those servers.
-const PING_RELAY = "/api/ping";
-const relayBest = {};
+
+// Ping = your round trip to Cloudflare + Cloudflare's round trip to the server, both measured by the Worker setup.
+// Nothing is scaled or adjusted: the number shown is the sum of those two measurements.
 const PING_WORKER = AS_WORKER;
 const workerBest = {};
 // Your round trip to Cloudflare doesn't depend on which server you open, so every measurement shares one floor for it.
@@ -517,7 +480,7 @@ async function viaWorker(ip){
   const get = async path => {
     const url = `${base}${path}${path.includes("?") ? "&" : "?"}_=${++rttSeq}`;
     const t0 = performance.now();
-    const r = await fetch(url, {cache:"no-store", credentials:"omit", referrerPolicy:"no-referrer", signal: AbortSignal.timeout(10000)});
+    const r = await fetch(url, {cache:"no-store", credentials:"omit", referrerPolicy:"no-referrer", signal: AbortSignal.timeout(12000)});
     const body = await r.text();
     const dt = performance.now() - t0;
     // The Worker allows Resource Timing, which gives the time on the wire without the browser's own overhead.
@@ -536,86 +499,25 @@ async function viaWorker(ip){
   for(let i = 0; i < 8; i++) xs.push((await get("/rtt")).wire);
   const {r, body} = await tcp;
   let j = {}; try{ j = JSON.parse(body); }catch{}
-  const vw = Math.min(...xs);
-  if(j.cloudflare) return {vw, cloudflare: true};    // the Worker can't connect to servers behind Cloudflare
   if(!r.ok || !j.ok) throw new Error(j.error || "worker " + r.status);
-  return {vw, ws: j.ms, colo: j.colo};
+  return {vw: Math.min(...xs), ws: j.ms, colo: j.colo, cf: !!j.cloudflare};
 }
-
-// Browser-only test (also used for servers the Worker can't reach).
-async function browserRaw(ip){
-  const t = await target(ip);
-  const runs = await Promise.all([
-    ...[0, 1, 2].map(() => fetchSample(t.host, t.port)),
-    ...[0, 1, 2].map(() => wsSample(t.host, t.port))
-  ]);
-  return {f: Math.min(Infinity, ...runs.slice(0, 3).filter(Boolean)), w: Math.min(Infinity, ...runs.slice(3).filter(Boolean))};
-}
-// Learns how much this browser's raw time overstates the real ping, using a Worker result as the reference.
-// Runs at most once a week per visitor and is used for servers the Worker can't test.
-const PINGK_KEY = "as-pingk-v1", PINGK_AGE = 7*24*60*60*1000;
-const kState = () => { try{ return JSON.parse(localStorage.getItem(PINGK_KEY) || "null"); }catch{ return null; } };
-const savedK = () => { const c = kState(); return c && c.k > 0 && Date.now() - c.t < PINGK_AGE ? c.k : null; };
-let calibrating = false, calibrated = false;
-async function calibrate(ip, truth){
-  const c = kState();
-  if(calibrating || calibrated || (c && Date.now() - c.t < PINGK_AGE)) return; // one attempt a week, whether or not it worked
-  calibrating = calibrated = true;
-  let k = null;
-  try{
-    const b = await browserRaw(ip), raw = Math.min(b.f, b.w);
-    if(Number.isFinite(raw) && raw > 8 && truth > 0) k = Math.min(PING_SCALE, Math.max(0.15, truth / raw));
-  }catch{}
-  try{ localStorage.setItem(PINGK_KEY, JSON.stringify({t: Date.now(), k})); }catch{}
-  calibrating = false;
-}
-
 async function measurePing(ip, force){
   if(pingBusy[ip]) return;
   const hit = pingCache[ip];
   if(!force && hit && Date.now() - hit.t < 60000){ pingUi[ip] = hit.v; return; }
   pingBusy[ip] = true; pingUi[ip] = {state:"measuring"};
   if(dlgIp === ip) renderInfo();
-  let v = {state:"error"};
+  let v;
   try{
-    let bound = 0, cf = false;
-    if(PING_WORKER){
-      try{
-        const m = await viaWorker(ip);
-        if(m.cloudflare){
-          cf = true; bound = vwFloor(m.vw);
-          if(PING_RELAY){
-            try{
-              const r = await fetch(`${PING_RELAY}?name=${encodeURIComponent(ip)}`, {cache:"no-store", signal: AbortSignal.timeout(9000)});
-              const j = await r.json();
-              if(r.ok && j.ok){
-                const eo = Math.max(0, j.ping - j.connect); // the part of the Minecraft ping that goes on past Cloudflare to the real server
-                const prev = relayBest[ip] && Date.now() - relayBest[ip].t < BEST_WINDOW ? relayBest[ip] : {vw: Infinity, eo: Infinity};
-                const b = relayBest[ip] = {t: Date.now(), vw: vwFloor(m.vw), eo: Math.min(prev.eo, eo)};
-                v = {state:"done", via:"relay", cf:true, ms: Math.max(1, Math.round(b.vw + b.eo - PING_OFFSET)),
-                  raw: `Behind Cloudflare. You to Cloudflare: ${Math.round(b.vw)} ms + Cloudflare to server: ${Math.round(b.eo)} ms (measured with a Minecraft ping)`};
-              }
-            }catch{} // relay not deployed or failed: browser-only test below
-          }
-        }
-        else{
-          const prev = workerBest[ip] && Date.now() - workerBest[ip].t < BEST_WINDOW ? workerBest[ip] : {vw: Infinity, ws: Infinity};
-          const b = workerBest[ip] = {t: Date.now(), vw: vwFloor(m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
-          v = {state:"done", via:"worker", ms: Math.max(1, Math.round(b.vw + b.ws - PING_OFFSET)),
-            raw: `You to Cloudflare${b.colo ? " (" + b.colo + ")" : ""}: ${Math.round(b.vw)} ms + Cloudflare to server: ${Math.round(b.ws)} ms`};
-          setTimeout(() => calibrate(ip, b.vw + b.ws), 4000); // later, so it never overlaps the next measurement
-        }
-      }catch{} // Worker unreachable or can't test this server: use the browser-only test below
-    }
-    if(v.state !== "done"){
-      const b = await browserRaw(ip);
-      const prev = pingBest[ip] && Date.now() - pingBest[ip].t < BEST_WINDOW ? pingBest[ip] : {f: Infinity, w: Infinity};
-      const best = pingBest[ip] = {t: Date.now(), f: Math.min(prev.f, b.f), w: Math.min(prev.w, b.w)};
-      const raw = Math.min(best.f, best.w), learned = savedK(), k = learned ?? PING_SCALE, fmt = x => Number.isFinite(x) ? Math.round(x) + " ms" : "n/a";
-      if(Number.isFinite(raw)) v = {state:"done", cf, ms: Math.max(1, Math.round(bound), Math.round(raw * k - PING_OFFSET)),
-        raw: `${cf ? "Behind Cloudflare. " : ""}Raw connection time ${fmt(raw)} (fetch ${fmt(best.f)}, websocket ${fmt(best.w)}), scaled by ${k.toFixed(2)}${learned ? " (learned for your browser)" : ""}${bound ? `. You to Cloudflare: ${Math.round(bound)} ms (minimum)` : ""}`};
-    }
-  }catch{}
+    const m = await viaWorker(ip);
+    const prev = workerBest[ip] && Date.now() - workerBest[ip].t < BEST_WINDOW ? workerBest[ip] : {ws: Infinity};
+    const b = workerBest[ip] = {t: Date.now(), vw: vwFloor(m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
+    v = {state:"done", cf: m.cf, ms: Math.max(1, Math.round(b.vw + b.ws)),
+      raw: `${m.cf ? "Behind Cloudflare. " : ""}You to Cloudflare${b.colo ? " (" + b.colo + ")" : ""}: ${Math.round(b.vw)} ms + Cloudflare to server${m.cf ? " (Minecraft ping)" : ""}: ${Math.round(b.ws)} ms`};
+  }catch(e){
+    v = {state:"error", raw: "Measurement failed: " + String((e && e.message) || e)};
+  }
   pingCache[ip] = {t: Date.now(), v}; pingUi[ip] = v; pingBusy[ip] = false;
   if(dlgIp === ip) renderInfo();
 }
@@ -681,9 +583,9 @@ function renderInfo(){
   const p = pingUi[s.ip] || {state:"measuring"}, busy = p.state === "measuring";
   const pv = p.state === "done" ? `≈ ${p.ms} ms` : p.state === "error" ? "Unavailable" : "Measuring…";
   const pcls = p.state === "done" ? (p.ms < 60 ? "ok" : p.ms < 120 ? "" : "bad") : "mut";
-  const pnote = p.state === "done" ? (p.via === "relay" ? "Behind Cloudflare: your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly." : p.cf ? "This server is behind Cloudflare, so it can only be estimated from your browser. In-game ping can differ." : p.via === "worker" ? "Estimated from your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly." : "Rough estimate of the round trip from your browser to the server. In-game ping can differ.")
-    : p.state === "error" ? "Couldn't measure from your browser. The server or a browser extension may be blocking the test."
-    : "Testing the connection from your browser…";
+  const pnote = p.state === "done" ? (p.cf ? "Behind Cloudflare: your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly." : "Your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly.")
+    : p.state === "error" ? "Couldn't measure the ping right now. Try Re-estimate."
+    : "Measuring the ping…";
 
   const ver = st && !st.unknown && st.version ? esc(st.version) : "–";
   const up = UPTIME[s.ip];
