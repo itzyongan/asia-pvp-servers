@@ -118,6 +118,8 @@ body:has(dialog[open]){overflow:hidden}
 .tile b{display:block;font:700 17px/1.35 var(--px);overflow-wrap:anywhere}
 .tile b.ok{color:#bfe8a6}.tile b.bad{color:#f0b3b4}.tile b.mut{color:var(--muted)}
 .dnote{color:var(--muted);font-size:14px}
+.dbgbtn{background:none;border:0;padding:0;color:var(--diamond);font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.dbg{margin-top:6px;padding:8px 10px;background:#111317;border:2px solid var(--line);color:var(--muted);font:12.5px/1.5 ui-monospace,"Courier New",monospace;overflow-wrap:anywhere}
 .dnote a{color:var(--diamond);text-underline-offset:3px}
 .btn:disabled{opacity:.5;cursor:default;filter:none}
 .pingbox{display:flex;align-items:center;gap:12px;background:#111317;border:2px solid var(--line);padding:10px 12px}
@@ -484,14 +486,22 @@ function wsSample(host, port){
 // Better estimate through your Cloudflare Worker (see worker.js): the Worker times a clean TCP connection from
 // Cloudflare's edge to the server, and we add our own round trip to that edge. Leave empty to use the browser-only test.
 // Example: "https://asia-pvp-ping.your-name.workers.dev"
-// Add ?pingdebug to the page address to show the ping breakdown under the ping in the pop-up.
-const PING_DEBUG = /[?&]pingdebug\b/.test(location.search);
+// "Show debug" under the ping reveals how it was measured. It is remembered, and ?pingdebug in the address starts it open.
+const DEBUG_KEY = "as-pingdebug-v1";
+let showDebug = /[?&]pingdebug\b/.test(location.search) || (() => { try{ return localStorage.getItem(DEBUG_KEY) === "1"; }catch{ return false; } })();
 // Servers behind Cloudflare can't be reached by the Worker, so this Vercel function (api/ping.js) measures them with a
 // real Minecraft ping instead. Leave empty to skip it and use the browser-only test for those servers.
 const PING_RELAY = "/api/ping";
 const relayBest = {};
 const PING_WORKER = "https://asia-pvp-servers.itzyongan.workers.dev";
 const workerBest = {};
+// Your round trip to Cloudflare doesn't depend on which server you open, so every measurement shares one floor for it.
+// A slow moment while the page is busy then can't inflate the next server's number.
+let vwBest = null;
+const vwFloor = v => {
+  if(!vwBest || v < vwBest.v || Date.now() - vwBest.t > BEST_WINDOW) vwBest = {v, t: Date.now()};
+  return vwBest.v;
+};
 // Every open runs a new measurement, but each leg keeps the lowest value seen within this window. Delays only add time,
 // so this stops the number jumping up because of a momentary hiccup. Set it to 0 to show every run as-is.
 const BEST_WINDOW = 10 * 60 * 1000;
@@ -515,7 +525,7 @@ async function viaWorker(ip){
   };
   await get("/rtt");                                  // opens the connection, so the next ones time one round trip
   const xs = [];
-  for(let i = 0; i < 5; i++) xs.push((await get("/rtt")).wire);
+  for(let i = 0; i < 8; i++) xs.push((await get("/rtt")).wire);
   const {r, body} = await get(`/tcp?name=${encodeURIComponent(ip)}`);
   let j = {}; try{ j = JSON.parse(body); }catch{}
   const vw = Math.min(...xs);
@@ -565,7 +575,7 @@ async function measurePing(ip, force){
       try{
         const m = await viaWorker(ip);
         if(m.cloudflare){
-          cf = true; bound = m.vw;
+          cf = true; bound = vwFloor(m.vw);
           if(PING_RELAY){
             try{
               const r = await fetch(`${PING_RELAY}?name=${encodeURIComponent(ip)}`, {cache:"no-store", signal: AbortSignal.timeout(9000)});
@@ -573,7 +583,7 @@ async function measurePing(ip, force){
               if(r.ok && j.ok){
                 const eo = Math.max(0, j.ping - j.connect); // the part of the Minecraft ping that goes on past Cloudflare to the real server
                 const prev = relayBest[ip] && Date.now() - relayBest[ip].t < BEST_WINDOW ? relayBest[ip] : {vw: Infinity, eo: Infinity};
-                const b = relayBest[ip] = {t: Date.now(), vw: Math.min(prev.vw, m.vw), eo: Math.min(prev.eo, eo)};
+                const b = relayBest[ip] = {t: Date.now(), vw: vwFloor(m.vw), eo: Math.min(prev.eo, eo)};
                 v = {state:"done", via:"relay", cf:true, ms: Math.max(1, Math.round(b.vw + b.eo - PING_OFFSET)),
                   raw: `Behind Cloudflare. You to Cloudflare: ${Math.round(b.vw)} ms + Cloudflare to server: ${Math.round(b.eo)} ms (measured with a Minecraft ping)`};
               }
@@ -582,7 +592,7 @@ async function measurePing(ip, force){
         }
         else{
           const prev = workerBest[ip] && Date.now() - workerBest[ip].t < BEST_WINDOW ? workerBest[ip] : {vw: Infinity, ws: Infinity};
-          const b = workerBest[ip] = {t: Date.now(), vw: Math.min(prev.vw, m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
+          const b = workerBest[ip] = {t: Date.now(), vw: vwFloor(m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
           v = {state:"done", via:"worker", ms: Math.max(1, Math.round(b.vw + b.ws - PING_OFFSET)),
             raw: `You to Cloudflare${b.colo ? " (" + b.colo + ")" : ""}: ${Math.round(b.vw)} ms + Cloudflare to server: ${Math.round(b.ws)} ms`};
           setTimeout(() => calibrate(ip, b.vw + b.ws), 4000); // later, so it never overlaps the next measurement
@@ -680,7 +690,7 @@ function renderInfo(){
   box.innerHTML = `
     <div><div class="pingbox"><div class="pv"><span>Ping (estimate)</span><b class="${pcls}"${p.raw ? ` title="${esc(p.raw)}"` : ""}>${pv}</b></div>
       <button class="btn alt" type="button" data-act="repeat"${busy ? " disabled" : ""}>Re-estimate</button></div>
-      <p class="dnote" style="margin-top:8px">${pnote}</p>${PING_DEBUG && p.raw ? `<p class="dnote" style="margin-top:4px">${esc(p.raw)}</p>` : ""}</div>
+      <p class="dnote" style="margin-top:8px">${pnote}${busy ? "" : ` <button type="button" class="dbgbtn" data-act="debug">${showDebug ? "Hide debug" : "Show debug"}</button>`}</p>${showDebug && !busy ? `<p class="dbg">${esc(p.raw || "No details for this measurement.")}</p>` : ""}</div>
     <div><div class="dsec"><span>Information</span><a href="https://namemc.com/server/${encodeURIComponent(s.ip)}" target="_blank" rel="noopener">View on NameMC</a></div>
       <div class="kv">${kvRow("Version", ver)}${kvRow("Uptime", up === undefined ? "No data" : `${up.toFixed(1)}%`)}${kvRow("Location", loc)}${net}</div></div>`;
   box.scrollTop = top;
@@ -696,7 +706,12 @@ function openInfo(ip){
   loadNet(ip);
 }
 $("#dlg-body").addEventListener("click", e => {
-  if(e.target.closest("[data-act=repeat]") && dlgIp) measurePing(dlgIp, true);
+  if(e.target.closest("[data-act=repeat]") && dlgIp){ measurePing(dlgIp, true); return; }
+  if(e.target.closest("[data-act=debug]")){
+    showDebug = !showDebug;
+    try{ localStorage.setItem(DEBUG_KEY, showDebug ? "1" : "0"); }catch{}
+    renderInfo();
+  }
 });
 $("#dlg-close").addEventListener("click", () => dlg.close());
 $("#dlg-copy").addEventListener("click", e => dlgIp && copyIp(dlgIp, e.currentTarget));
