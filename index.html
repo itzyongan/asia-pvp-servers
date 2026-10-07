@@ -93,7 +93,6 @@ h2:first-child{margin-top:0}
 .dot.on{background:var(--grass)}.dot.off{background:var(--no)}
 .copy{padding:8px 16px;font-size:14px;white-space:nowrap;min-width:92px}
 .srv{cursor:pointer}
-.ver{max-width:24ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty{padding:32px;text-align:center;color:var(--muted);border:2px dashed var(--line)}
 
 /* footer sections */
@@ -340,6 +339,21 @@ const chip = (label,v) => {
   return `<span class="chip ${c}" title="${label}: ${t}">${label}${v==="l"?" (limited)":""}${v===null?" ?":""}</span>`;
 };
 
+// Server icons are tried from several places in turn: the Worker (taken from the server's own status, two sources),
+// then two public icon services, and finally the letter tile.
+function iconSrcs(ip, icon){
+  if(typeof icon === "string" && icon.startsWith("data:")) return [icon];
+  const q = encodeURIComponent(ip);
+  return [`${AS_WORKER}/icon?name=${q}`, `https://api.mcstatus.io/v2/icon/${q}`, `https://api.mcsrvstat.us/icon/${q}`];
+}
+function iconNext(img){
+  const rest = (img.dataset.q || "").split(" ").filter(Boolean), next = rest.shift();
+  if(next){ img.dataset.q = rest.join(" "); img.src = next; } else img.replaceWith(img.dataset.l);
+}
+function iconImg(ip, icon, letter, lazy){
+  const [first, ...rest] = iconSrcs(ip, icon);
+  return `<img src="${esc(first)}" alt="" width="64" height="64"${lazy ? ' loading="lazy"' : ""} decoding="async" data-l="${esc(letter)}" data-q="${esc(rest.join(" "))}" onerror="iconNext(this)">`;
+}
 const flash = {}; // per-server button label ("Copied!") kept in data so a row redraw can't wipe it
 function rowInner(s){
   const h = Math.abs(hue(s.ip))%360, st = state.status[s.ip];
@@ -350,10 +364,10 @@ function rowInner(s){
   const fl = flash[s.ip], label = fl && fl.until > Date.now() ? fl.text : "Copy IP";
   const statusHtml = st && !st.unknown && !fresh.has(s.ip) ? status.replace('class="status"','class="status stale"') : status;
   return `
-    <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64" loading="lazy" data-l="${esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}" onerror="this.replaceWith(this.dataset.l)">` : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
+    <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? iconImg(s.ip, st.icon, s.ip.replace(/^(as|play)\./,"")[0].toUpperCase(), true) : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
     <div>
       <button class="ip" data-ip="${esc(s.ip)}" aria-label="Show info for ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
-      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${statusHtml}${st?.version ? `<span class="ver" title="${esc(st.motd || st.version)}">${esc(st.version)}</span>` : ""}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
+      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${statusHtml}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
     </div>
     <div class="modes">${chip("Duels",s.duels)}${chip("FFA",s.ffa)}${chip("Sandbox",s.sandbox)}</div>
     <button class="btn copy" data-ip="${esc(s.ip)}">${label}</button>
@@ -569,7 +583,7 @@ function renderInfo(){
   const st = state.status[s.ip], h = Math.abs(hue(s.ip)) % 360;
   const ic = $("#dlg-icon");
   ic.style.background = `hsl(${h} 35% 32%)`;
-  ic.innerHTML = st?.icon ? `<img src="${st.icon}" alt="" width="64" height="64" data-l="${esc(s.ip.replace(/^(as|play)\./, "")[0].toUpperCase())}" onerror="this.replaceWith(this.dataset.l)">` : esc(s.ip.replace(/^(as|play)\./, "")[0].toUpperCase());
+  ic.innerHTML = st?.icon ? iconImg(s.ip, st.icon, s.ip.replace(/^(as|play)\./, "")[0].toUpperCase(), false) : esc(s.ip.replace(/^(as|play)\./, "")[0].toUpperCase());
   const stale = st && !st.unknown && !fresh.has(s.ip) ? " stale" : "";
   const status = st === undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
     : st.unknown ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
@@ -704,7 +718,7 @@ async function loadWorkerStatus(){
     const x = j.s[s.ip]; if(!x) continue;
     state.status[s.ip] = {
       online: !!x.online, players: num(x.players),
-      icon: x.icon ? `https://api.mcstatus.io/v2/icon/${encodeURIComponent(s.ip)}` : null,
+      icon: x.icon ? "remote" : null, // the picture itself is loaded separately, see iconSrcs
       version: x.version ? String(x.version).slice(0, 40) : null, motd: x.motd ? String(x.motd).slice(0, 140) : null,
       addr: x.addr || null, port: x.port || null
     };
