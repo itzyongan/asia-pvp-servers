@@ -14,6 +14,14 @@ const dns = require("node:dns/promises");
 const README_URL = "https://raw.githubusercontent.com/itzyongan/asia-pvp-servers/main/README.md";
 const SAMPLES = 3, TIMEOUT_MS = 2500, LIST_TTL = 10 * 60 * 1000;
 let listCache = {t: 0, ips: []};
+const memo = new Map();
+async function cached(key, ttl, fn){
+  const hit = memo.get(key);
+  if(hit && Date.now() - hit.t < ttl) return hit.v;
+  const v = await fn();
+  memo.set(key, {t: Date.now(), v});
+  return v;
+}
 
 function parseIps(md){
   const ips = [];
@@ -99,21 +107,19 @@ async function sampleOnce(address, port, name){
 }
 
 // Like the game, follow the SRV record if there is one.
-async function resolveTarget(name){
+const resolveTarget = name => cached("srv:" + name, 5 * 60 * 1000, async () => {
   try{
     const recs = await dns.resolveSrv(`_minecraft._tcp.${name}`);
     if(recs.length){ recs.sort((a, b) => a.priority - b.priority || b.weight - a.weight); return {host: recs[0].name, port: recs[0].port}; }
   }catch{}
   return {host: name, port: 25565};
-}
+});
 
 async function measure(name, target){
-  const {address} = await dns.lookup(target.host);   // look the address up first so DNS isn't part of the timing
-  const out = [];
-  for(let i = 0; i < SAMPLES; i++){
-    try{ out.push(await sampleOnce(address, target.port, name)); }
-    catch(e){ if(!out.length) throw e; break; }
-  }
+  const {address} = await cached("a:" + target.host, 5 * 60 * 1000, () => dns.lookup(target.host)); // look the address up first so DNS isn't part of the timing
+  const results = await Promise.allSettled(Array.from({length: SAMPLES}, () => sampleOnce(address, target.port, name)));
+  const out = results.filter(r => r.status === "fulfilled").map(r => r.value);
+  if(!out.length) throw results[0].reason;
   return {connect: Math.min(...out.map(x => x.connect)), ping: Math.min(...out.map(x => x.ping))}; // fastest of each: delays only add time
 }
 
@@ -121,8 +127,8 @@ module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   const name = String((req.query && req.query.name) || "").trim().toLowerCase();
   try{
-    if(!(await listedServers()).includes(name)) return res.status(404).json({ok: false, error: "unknown server"});
-    const target = await resolveTarget(name);
+    const [list, target] = await Promise.all([listedServers(), resolveTarget(name)]);
+    if(!list.includes(name)) return res.status(404).json({ok: false, error: "unknown server"});
     if(target.port < 1 || target.port > 65535 || target.port === 25) return res.status(400).json({ok: false, error: "port not allowed"});
     const m = await measure(name, target);
     const round = x => Math.round(x * 10) / 10;
