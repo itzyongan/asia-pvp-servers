@@ -521,8 +521,10 @@ async function viaWorker(ip, workerUrl){
   const xs = [];
   for(let i = 0; i < 8; i++) xs.push((await get("/rtt")).wire);
   const {r, body} = await tcp;
-  let j = {}; try{ j = JSON.parse(body); }catch{}
-  if(!r.ok || !j.ok) throw new Error(j.error || "worker " + r.status);
+  let j = null; try{ j = JSON.parse(body); }catch{}
+  const who = new URL(base).hostname.split(".")[0];
+  if(!j) throw new Error(`${who}: not available (HTTP ${r.status})`);            // not deployed or unreachable: the caller may try the next Worker
+  if(!r.ok || !j.ok){ const e = new Error(`${who}: ${j.error || "HTTP " + r.status}`); e.reachable = true; throw e; }
   return {vw: Math.min(...xs), ws: j.ms, colo: j.colo, cf: !!j.cloudflare};
 }
 async function measurePing(ip, force){
@@ -536,14 +538,15 @@ async function measurePing(ip, force){
     const region = (S.find(x => x.ip === ip) || {}).region;
     let m, used, lastError;
     for(const url of [...new Set([REGION_WORKERS[region], PING_WORKER].filter(Boolean))]){
-      try{ m = await viaWorker(ip, url); used = url; break; }catch(e){ lastError = e; } // regional Worker missing or failing: try the main one
+      try{ m = await viaWorker(ip, url); used = url; break; }
+      catch(e){ lastError = e; if(e.reachable) break; } // only a Worker that isn't there is skipped; a real error is shown as it is
     }
     if(!m) throw lastError;
     const key = ip + "|" + used;
     const prev = workerBest[key] && Date.now() - workerBest[key].t < BEST_WINDOW ? workerBest[key] : {ws: Infinity};
     const b = workerBest[key] = {t: Date.now(), vw: vwFloor(used, m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
     v = {state:"done", cf: m.cf, ms: Math.max(1, Math.round(b.vw + b.ws)),
-      raw: `${m.cf ? "Behind Cloudflare. " : ""}You to Cloudflare${b.colo ? " (" + b.colo + ")" : ""}: ${Math.round(b.vw)} ms + Cloudflare to server${m.cf ? " (Minecraft ping)" : ""}: ${Math.round(b.ws)} ms`};
+      raw: `${m.cf ? "Behind Cloudflare. " : ""}You to Cloudflare${b.colo ? " (" + b.colo + ")" : ""}: ${Math.round(b.vw)} ms + Cloudflare to server${m.cf ? " (Minecraft ping)" : ""}: ${Math.round(b.ws)} ms. Worker: ${new URL(used).hostname.split(".")[0]}${REGION_WORKERS[region] && used !== REGION_WORKERS[region] ? " (the " + region + " Worker isn't available)" : ""}`};
   }catch(e){
     v = {state:"error", raw: "Measurement failed: " + String((e && e.message) || e)};
   }
