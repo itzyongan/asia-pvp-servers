@@ -16,6 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://api.mcstatus.io" crossorigin>
 <link rel="preconnect" href="https://asia-pvp-servers.itzyongan.workers.dev" crossorigin>
+<link rel="preconnect" href="https://asia-pvp-sg.itzyongan.workers.dev" crossorigin>
 <script>
 // One request to the Worker returns every server's status. Starting it here lets it run while the page and README load.
 var AS_WORKER = "https://asia-pvp-servers.itzyongan.workers.dev";
@@ -477,20 +478,28 @@ let showDebug = /[?&]pingdebug\b/.test(location.search) || (() => { try{ return 
 // Ping = your round trip to Cloudflare + Cloudflare's round trip to the server, both measured by the Worker setup.
 // Nothing is scaled or adjusted: the number shown is the sum of those two measurements.
 const PING_WORKER = AS_WORKER;
+// Regional Workers (see wrangler.toml) run near their region, so the "Cloudflare to server" leg starts close to the server.
+// A server uses the Worker for its region when that answers, and otherwise the main Worker above.
+const REGION_WORKERS = {
+  SG: "https://asia-pvp-sg.itzyongan.workers.dev",
+  KR: "https://asia-pvp-kr.itzyongan.workers.dev",
+  IN: "https://asia-pvp-in.itzyongan.workers.dev"
+};
 const workerBest = {};
-// Your round trip to Cloudflare doesn't depend on which server you open, so every measurement shares one floor for it.
+// Your round trip to a Worker doesn't depend on which server you open, so servers that use the same Worker share one floor.
 // A slow moment while the page is busy then can't inflate the next server's number.
-let vwBest = null;
-const vwFloor = v => {
-  if(!vwBest || v < vwBest.v || Date.now() - vwBest.t > BEST_WINDOW) vwBest = {v, t: Date.now()};
-  return vwBest.v;
+const vwBest = {};
+const vwFloor = (base, v) => {
+  const b = vwBest[base];
+  if(!b || v < b.v || Date.now() - b.t > BEST_WINDOW) vwBest[base] = {v, t: Date.now()};
+  return vwBest[base].v;
 };
 // Every open runs a new measurement, but each leg keeps the lowest value seen within this window. Delays only add time,
 // so this stops the number jumping up because of a momentary hiccup. Set it to 0 to show every run as-is.
 const BEST_WINDOW = 10 * 60 * 1000;
 let rttSeq = 0;
-async function viaWorker(ip){
-  const base = PING_WORKER.replace(/\/+$/, "");
+async function viaWorker(ip, workerUrl){
+  const base = workerUrl.replace(/\/+$/, "");
   const get = async path => {
     const url = `${base}${path}${path.includes("?") ? "&" : "?"}_=${++rttSeq}`;
     const t0 = performance.now();
@@ -524,9 +533,15 @@ async function measurePing(ip, force){
   if(dlgIp === ip) renderInfo();
   let v;
   try{
-    const m = await viaWorker(ip);
-    const prev = workerBest[ip] && Date.now() - workerBest[ip].t < BEST_WINDOW ? workerBest[ip] : {ws: Infinity};
-    const b = workerBest[ip] = {t: Date.now(), vw: vwFloor(m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
+    const region = (S.find(x => x.ip === ip) || {}).region;
+    let m, used, lastError;
+    for(const url of [...new Set([REGION_WORKERS[region], PING_WORKER].filter(Boolean))]){
+      try{ m = await viaWorker(ip, url); used = url; break; }catch(e){ lastError = e; } // regional Worker missing or failing: try the main one
+    }
+    if(!m) throw lastError;
+    const key = ip + "|" + used;
+    const prev = workerBest[key] && Date.now() - workerBest[key].t < BEST_WINDOW ? workerBest[key] : {ws: Infinity};
+    const b = workerBest[key] = {t: Date.now(), vw: vwFloor(used, m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
     v = {state:"done", cf: m.cf, ms: Math.max(1, Math.round(b.vw + b.ws)),
       raw: `${m.cf ? "Behind Cloudflare. " : ""}You to Cloudflare${b.colo ? " (" + b.colo + ")" : ""}: ${Math.round(b.vw)} ms + Cloudflare to server${m.cf ? " (Minecraft ping)" : ""}: ${Math.round(b.ws)} ms`};
   }catch(e){
@@ -710,21 +725,26 @@ async function runPool(list, n){
 // The Worker answers for every server in one go (cached at the edge), so rows fill in almost at once.
 async function loadWorkerStatus(){
   if(!PING_WORKER) return;
+  const fetchStatus = () => fetch(PING_WORKER + "/status", {cache:"no-store"}).then(r => r.ok ? r.json() : null).catch(() => null);
   const early = window.__status; window.__status = null; // the request started in <head> is used once
-  const j = await (early || fetch(PING_WORKER + "/status").then(r => r.ok ? r.json() : null).catch(() => null));
-  if(!j || !j.s) return;
-  let n = 0;
-  for(const s of S){
-    const x = j.s[s.ip]; if(!x) continue;
-    state.status[s.ip] = {
-      online: !!x.online, players: num(x.players),
-      icon: x.icon ? "remote" : null, // the picture itself is loaded separately, see iconSrcs
-      version: x.version ? String(x.version).slice(0, 40) : null, motd: x.motd ? String(x.motd).slice(0, 140) : null,
-      addr: x.addr || null, port: x.port || null
-    };
-    fresh.add(s.ip); n++;
+  let j = await (early || fetchStatus());
+  for(let round = 0; j && j.s && round < 6; round++){
+    let n = 0;
+    for(const s of S){
+      const x = j.s[s.ip]; if(!x) continue;
+      state.status[s.ip] = {
+        online: !!x.online, players: num(x.players),
+        icon: x.icon ? "remote" : null, // the picture itself is loaded separately, see iconSrcs
+        version: x.version ? String(x.version).slice(0, 40) : null, motd: x.motd ? String(x.motd).slice(0, 140) : null,
+        addr: x.addr || null, port: x.port || null
+      };
+      fresh.add(s.ip); n++;
+    }
+    if(n) keepAnchor(render); // one redraw for all rows
+    if(!j.partial) return;
+    await new Promise(res => setTimeout(res, 2500)); // the Worker is still checking the rest
+    j = await fetchStatus();
   }
-  if(n) keepAnchor(render); // one redraw for all rows
 }
 async function checkAll(){
   await loadWorkerStatus();
