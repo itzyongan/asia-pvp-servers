@@ -352,14 +352,13 @@ function iconSrcs(ip, icon){
   // "try": the status lookup didn't see an icon, so only the sources that never return a placeholder are asked
   return icon === "try" ? own : [...own, `https://api.mcstatus.io/v2/icon/${q}`, `https://api.mcsrvstat.us/icon/${q}`];
 }
-const iconState = {}; // per server: the address the icon loaded from, or "none" when every source failed
 function iconNext(img){
   const rest = (img.dataset.q || "").split(" ").filter(Boolean), next = rest.shift();
-  if(next){ img.dataset.q = rest.join(" "); img.src = next; } else { iconState[img.dataset.ip] = "none"; img.replaceWith(img.dataset.l); }
+  if(next){ img.dataset.q = rest.join(" "); img.src = next; } else img.replaceWith(img.dataset.l);
 }
 function iconImg(ip, icon, letter, lazy){
   const [first, ...rest] = iconSrcs(ip, icon);
-  return `<img src="${esc(first)}" alt="" width="64" height="64"${lazy ? ' loading="lazy"' : ""} decoding="async" data-ip="${esc(ip)}" data-l="${esc(letter)}" data-q="${esc(rest.join(" "))}" onload="iconState[this.dataset.ip]=this.src.slice(0,60)" onerror="iconNext(this)">`;
+  return `<img src="${esc(first)}" alt="" width="64" height="64"${lazy ? ' loading="lazy"' : ""} decoding="async" data-l="${esc(letter)}" data-q="${esc(rest.join(" "))}" onerror="iconNext(this)">`;
 }
 const flash = {}; // per-server button label ("Copied!") kept in data so a row redraw can't wipe it
 function rowInner(s){
@@ -504,34 +503,49 @@ const vwFloor = (base, v) => {
 // so this stops the number jumping up because of a momentary hiccup. Set it to 0 to show every run as-is.
 const BEST_WINDOW = 10 * 60 * 1000;
 let rttSeq = 0;
-async function viaWorker(ip, workerUrl){
-  const base = workerUrl.replace(/\/+$/, "");
-  const get = async path => {
-    const url = `${base}${path}${path.includes("?") ? "&" : "?"}_=${++rttSeq}`;
-    const t0 = performance.now();
-    const r = await fetch(url, {cache:"no-store", credentials:"omit", referrerPolicy:"no-referrer", signal: AbortSignal.timeout(12000)});
-    const body = await r.text();
-    const dt = performance.now() - t0;
-    // The Worker allows Resource Timing, which gives the time on the wire without the browser's own overhead.
-    let wire = dt;
-    for(let i = 0; i < 4; i++){
-      const e = performance.getEntriesByName(url).pop();
-      if(e){ if(e.requestStart > 0 && e.responseStart > e.requestStart) wire = e.responseStart - e.requestStart; break; }
-      await new Promise(res => setTimeout(res, 0));
-    }
-    return {r, body, wire: Math.max(1, Math.min(wire, dt))};
+// One timed request. The Workers and this site allow Resource Timing, which gives the time on the wire without the browser's own overhead.
+async function timedGet(base, path){
+  const url = `${base}${path}${path.includes("?") ? "&" : "?"}_=${++rttSeq}`, abs = new URL(url, location.href).href;
+  const t0 = performance.now();
+  const r = await fetch(url, {cache:"no-store", credentials:"omit", referrerPolicy:"no-referrer", signal: AbortSignal.timeout(12000)});
+  const body = await r.text();
+  const dt = performance.now() - t0;
+  let wire = dt;
+  for(let i = 0; i < 4; i++){
+    const e = performance.getEntriesByName(abs).pop();
+    if(e){ if(e.requestStart > 0 && e.responseStart > e.requestStart) wire = e.responseStart - e.requestStart; break; }
+    await new Promise(res => setTimeout(res, 0));
+  }
+  return {r, body, wire: Math.max(1, Math.min(wire, dt))};
+}
+// Your round trips to a base address (timed on a warm connection) while one slower request, the server test, runs alongside.
+async function route(base, rttPath, testPath, who){
+  const rtt = async () => {
+    const x = await timedGet(base, rttPath);
+    if(!x.r.ok) throw new Error(`${who}: not available (HTTP ${x.r.status})`); // a missing function must not look like a fast round trip
+    return x.wire;
   };
-  await get("/rtt");                                  // opens the connection, so the next ones time one round trip
-  const tcp = get(`/tcp?name=${encodeURIComponent(ip)}`); // runs while we time the round trips
-  tcp.catch(() => {});
+  await rtt();                                         // opens the connection, so the next ones time one round trip
+  const test = timedGet(base, testPath);               // runs while we time the round trips
+  test.catch(() => {});
   const xs = [];
-  for(let i = 0; i < 8; i++) xs.push((await get("/rtt")).wire);
-  const {r, body} = await tcp;
+  for(let i = 0; i < 8; i++) xs.push(await rtt());
+  const {r, body} = await test;
   let j = null; try{ j = JSON.parse(body); }catch{}
-  const who = new URL(base).hostname.split(".")[0];
-  if(!j) throw new Error(`${who}: not available (HTTP ${r.status})`);            // not deployed or unreachable: the caller may try the next Worker
+  if(!j) throw new Error(`${who}: not available (HTTP ${r.status})`);
   if(!r.ok || !j.ok){ const e = new Error(`${who}: ${j.error || "HTTP " + r.status}`); e.reachable = true; throw e; }
-  return {vw: Math.min(...xs), ws: j.ms, colo: j.colo, cf: !!j.cloudflare};
+  return {vw: Math.min(...xs), j};
+}
+async function viaWorker(ip, workerUrl){
+  const base = workerUrl.replace(/\/+$/, ""), who = new URL(base).hostname.split(".")[0];
+  const {vw, j} = await route(base, "/rtt", `/tcp?name=${encodeURIComponent(ip)}`, who);
+  return {vw, ws: j.ms, colo: j.colo, cf: !!j.cloudflare};
+}
+// Singapore route: this site's own functions run in Singapore (see vercel.json), so this measures you -> Singapore -> server,
+// whatever Cloudflare location your connection to Cloudflare happens to end up at.
+async function viaVercel(ip){
+  const {vw, j} = await route("", "/api/rtt", `/api/ping?name=${encodeURIComponent(ip)}`, "singapore");
+  return {vw, ws: j.ping, colo: "sin1", cf: false};
 }
 async function measurePing(ip, force){
   if(pingBusy[ip]) return;
@@ -541,27 +555,29 @@ async function measurePing(ip, force){
   if(dlgIp === ip) renderInfo();
   let v;
   try{
-    // True ping can never be higher than any "you -> Worker -> server" route, so every route gives an upper bound and
-    // the lowest is the closest. This matters for anycast servers: the pinned regional Worker can sit far from the
-    // server location that is nearest to you, while the main Worker (nearest to you) finds it.
+    // True ping can never be higher than any "you -> somewhere -> server" route, so every route gives an upper bound and the
+    // lowest is the closest. Cloudflare decides where your connection enters its network and that can't be forced, so a
+    // route through the Singapore functions of this site is measured as well. Anycast servers answer from the location
+    // nearest to wherever the measuring happens, which is another reason to look at more than one route.
     const region = (S.find(x => x.ip === ip) || {}).region;
     const label = url => new URL(url).hostname.split(".")[0];
-    const urls = [...new Set([REGION_WORKERS[region], PING_WORKER].filter(Boolean))];
-    const settled = await Promise.allSettled(urls.map(url => viaWorker(ip, url)));
+    const jobs = [...new Set([REGION_WORKERS[region], PING_WORKER].filter(Boolean))].map(url => ({name: label(url), floor: url, run: () => viaWorker(ip, url)}));
+    jobs.push({name: "singapore", floor: "singapore", run: () => viaVercel(ip)});
+    const settled = await Promise.allSettled(jobs.map(j => j.run()));
     const routes = [], failed = [];
     settled.forEach((r, i) => {
       if(r.status !== "fulfilled"){ failed.push(r.reason); return; }
-      const m = r.value, key = ip + "|" + urls[i];
+      const m = r.value, job = jobs[i], key = ip + "|" + job.floor;
       const prev = workerBest[key] && Date.now() - workerBest[key].t < BEST_WINDOW ? workerBest[key] : {ws: Infinity};
-      const b = workerBest[key] = {t: Date.now(), vw: vwFloor(urls[i], m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
-      routes.push({url: urls[i], m, b, total: b.vw + b.ws});
+      const b = workerBest[key] = {t: Date.now(), vw: vwFloor(job.floor, m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
+      routes.push({name: job.name, m, b, total: b.vw + b.ws});
     });
     if(!routes.length) throw failed.find(e => e && e.reachable) || failed[0];
     const best = routes.reduce((x, y) => y.total < x.total ? y : x);
-    const where = r => `${label(r.url)}${r.b.colo ? " (" + r.b.colo + ")" : ""}`;
+    const where = r => `${r.name}${r.b.colo ? " (" + r.b.colo + ")" : ""}`;
     v = {state:"done", cf: best.m.cf, ms: Math.max(1, Math.round(best.total)),
-      raw: `${best.m.cf ? "Behind Cloudflare. " : ""}You to Cloudflare${best.b.colo ? " (" + best.b.colo + ")" : ""}: ${Math.round(best.b.vw)} ms + Cloudflare to server${best.m.cf ? " (Minecraft ping)" : ""}: ${Math.round(best.b.ws)} ms. Worker: ${label(best.url)}`
-        + (routes.length > 1 ? `. Lowest of ${routes.length} routes: ${routes.map(r => `${where(r)} ${Math.round(r.total)} ms`).join(", ")}` : "")
+      raw: `${best.m.cf ? "Behind Cloudflare. " : ""}You to ${best.name === "singapore" ? "Singapore" : "Cloudflare"}${best.b.colo ? " (" + best.b.colo + ")" : ""}: ${Math.round(best.b.vw)} ms + ${best.name === "singapore" ? "Singapore" : "Cloudflare"} to server${best.m.cf ? " (Minecraft ping)" : ""}: ${Math.round(best.b.ws)} ms. Route: ${best.name}`
+        + (routes.length > 1 ? `. Lowest of ${routes.length}: ${routes.map(r => `${where(r)} ${Math.round(r.total)} ms`).join(", ")}` : "")
         + (failed.length ? `. Unavailable: ${failed.map(e => String((e && e.message) || e)).join("; ")}` : "")};
   }catch(e){
     v = {state:"error", raw: "Measurement failed: " + String((e && e.message) || e)};
@@ -648,7 +664,7 @@ function renderInfo(){
   box.innerHTML = `
     <div><div class="pingbox"><div class="pv"><span>Ping (estimate)</span><b class="${pcls}"${p.raw ? ` title="${esc(p.raw)}"` : ""}>${pv}</b></div>
       <button class="btn alt" type="button" data-act="repeat"${busy ? " disabled" : ""}>Re-estimate</button></div>
-      <p class="dnote" style="margin-top:8px">${pnote}${busy ? "" : ` <button type="button" class="dbgbtn" data-act="debug">${showDebug ? "Hide debug" : "Show debug"}</button>`}</p>${showDebug && !busy ? `<p class="dbg">${esc(p.raw || "No details for this measurement.")}<br>${esc("Icon: " + (!st || st.unknown ? "status unknown" : !st.icon ? "none reported by the status check" : iconState[s.ip] === "none" ? "no source returned an icon" : iconState[s.ip] ? "loaded from " + iconState[s.ip] : "loading"))}</p>` : ""}</div>
+      <p class="dnote" style="margin-top:8px">${pnote}${busy ? "" : ` <button type="button" class="dbgbtn" data-act="debug">${showDebug ? "Hide debug" : "Show debug"}</button>`}</p>${showDebug && !busy ? `<p class="dbg">${esc(p.raw || "No details for this measurement.")}</p>` : ""}</div>
     <div><div class="dsec"><span>Information</span><a href="https://namemc.com/server/${encodeURIComponent(s.ip)}" target="_blank" rel="noopener">View on NameMC</a></div>
       <div class="kv">${kvRow("Version", ver)}${kvRow("Uptime", up === undefined ? "No data" : `${up.toFixed(1)}%`)}${kvRow("Location", loc)}${net}</div></div>`;
   box.scrollTop = top;
@@ -746,6 +762,7 @@ async function loadWorkerStatus(){
   const early = window.__status; window.__status = null; // the request started in <head> is used once
   let j = await (early || asStatus());
   for(let round = 0; j && j.s && round < 6; round++){
+    const old = j.t && Date.now() - j.t > 60000; // an older copy was served while a new one is being made
     let n = 0;
     for(const s of S){
       const x = j.s[s.ip]; if(!x) continue;
@@ -755,10 +772,10 @@ async function loadWorkerStatus(){
         version: x.version ? String(x.version).slice(0, 40) : null, motd: x.motd ? String(x.motd).slice(0, 140) : null,
         addr: x.addr || null, port: x.port || null
       };
-      fresh.add(s.ip); n++;
+      if(!old) fresh.add(s.ip); // an old copy is shown dimmed until the fresh one arrives
+      n++;
     }
     if(n) keepAnchor(render); // one redraw for all rows
-    const old = j.t && Date.now() - j.t > 60000 && round === 0; // an older copy was served while a new one is being made
     if(!j.partial && !old) return;
     await new Promise(res => setTimeout(res, j.partial ? 2500 : 3000));
     j = await asStatus();
