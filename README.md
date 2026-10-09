@@ -19,7 +19,6 @@
 | ⭐ play.pvphq.com | 🇸🇬 | ✅ | `-` | `-` |
 | as.meowmc.fun | 🇸🇬 | ✅ | ❌ | ❌ |
 | as.metalmc.vip | 🇸🇬 | ✅ | ✅ | `-` |
-| as.strikemc.net | 🇸🇬 | ✅ | ✅ | `-` |
 | as.xylon.gg | 🇸🇬 | ❌ | ✅ | ❌ |
 | sg.asiaprac.xyz | 🇸🇬 | ❌ | ❌ | ✅ |
 | pvpconnect.xyz | 🇰🇷 | ✅ | ✅ | ❌ |
