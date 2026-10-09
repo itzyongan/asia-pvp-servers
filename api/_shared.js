@@ -81,13 +81,13 @@ class Reader {
 }
 
 // Returns the server's status JSON (players, version, favicon ...).
-async function slpStatus(name, address, port, timeoutMs = 4000){
+async function slpStatus(name, address, port, timeoutMs = 4000, protocol = 767){
   const socket = net.connect({host: address, port});
   const reader = new Reader(socket);
   const timer = setTimeout(() => socket.destroy(new Error("timed out")), timeoutMs);
   try{
     await new Promise((res, rej) => { socket.once("connect", res); socket.once("error", rej); });
-    socket.write(Buffer.concat([packet(0, varint(767), mcString(name), u16(port), varint(1)), packet(0)]));
+    socket.write(Buffer.concat([packet(0, varint(protocol), mcString(name), u16(port), varint(1)), packet(0)]));
     const p = await reader.packet();
     if(p.id !== 0) throw new Error("unexpected reply");
     let len = 0, shift = 0, i = 0;
