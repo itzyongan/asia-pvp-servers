@@ -1,8 +1,10 @@
 // GET /api/status -> every listed server's status in one response.
 // Vercel's edge cache keeps the answer for 20 seconds and serves an older copy instantly (while refreshing it)
-// for up to 10 minutes, so most visitors never wait for the servers to be checked.
+// for up to a day, so visitors almost never wait for the servers to be checked. The page notices an old copy
+// (it carries its build time) and asks again a few seconds later for the fresh one.
 const {listedServers, getJson} = require("./_shared");
 
+const DEADLINE_MS = 3800; // a build never waits longer than this for slow servers; the page looks up any that are missing
 const isIcon = v => typeof v === "string" && v.startsWith("data:image/");
 
 function pack(online, d){
@@ -17,9 +19,9 @@ function pack(online, d){
 
 async function checkOne(ip){
   const q = encodeURIComponent(ip);
-  const first = await getJson(`https://api.mcstatus.io/v2/status/java/${q}?query=false&timeout=3`, 4500).catch(() => null);
+  const first = await getJson(`https://api.mcstatus.io/v2/status/java/${q}?query=false&timeout=2`, 3000).catch(() => null);
   if(first?.online) return pack(true, first);
-  const second = await getJson(`https://api.mcsrvstat.us/3/${q}`, 3500).catch(() => null); // second opinion before calling it offline
+  const second = await getJson(`https://api.mcsrvstat.us/3/${q}`, 2500).catch(() => null); // second opinion before calling it offline
   if(second?.online){
     return {online: true, players: second.players?.online ?? 0,
       version: typeof second.version === "string" ? second.version.slice(0, 40) : null,
@@ -33,10 +35,11 @@ async function checkOne(ip){
 module.exports = async (req, res) => {
   try{
     const ips = await listedServers();
-    const results = await Promise.all(ips.map(ip => checkOne(ip)));   // all servers at once
+    const late = new Promise(res => setTimeout(() => res(undefined), DEADLINE_MS));
+    const results = await Promise.all(ips.map(ip => Promise.race([checkOne(ip), late])));   // all servers at once, none holds the others up
     const s = {};
     ips.forEach((ip, i) => { if(results[i]) s[ip] = results[i]; });
-    res.setHeader("Cache-Control", "public, s-maxage=20, stale-while-revalidate=600");
+    res.setHeader("Cache-Control", "public, s-maxage=20, stale-while-revalidate=86400");
     res.status(200).json({t: Date.now(), s});
   }catch(e){
     res.setHeader("Cache-Control", "no-store");
