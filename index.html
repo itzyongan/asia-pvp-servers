@@ -352,13 +352,14 @@ function iconSrcs(ip, icon){
   // "try": the status lookup didn't see an icon, so only the sources that never return a placeholder are asked
   return icon === "try" ? own : [...own, `https://api.mcstatus.io/v2/icon/${q}`, `https://api.mcsrvstat.us/icon/${q}`];
 }
+const iconState = {}; // per server: the address the icon loaded from, or "none" when every source failed
 function iconNext(img){
   const rest = (img.dataset.q || "").split(" ").filter(Boolean), next = rest.shift();
-  if(next){ img.dataset.q = rest.join(" "); img.src = next; } else img.replaceWith(img.dataset.l);
+  if(next){ img.dataset.q = rest.join(" "); img.src = next; } else { iconState[img.dataset.ip] = "none"; img.replaceWith(img.dataset.l); }
 }
 function iconImg(ip, icon, letter, lazy){
   const [first, ...rest] = iconSrcs(ip, icon);
-  return `<img src="${esc(first)}" alt="" width="64" height="64"${lazy ? ' loading="lazy"' : ""} decoding="async" data-l="${esc(letter)}" data-q="${esc(rest.join(" "))}" onerror="iconNext(this)">`;
+  return `<img src="${esc(first)}" alt="" width="64" height="64"${lazy ? ' loading="lazy"' : ""} decoding="async" data-ip="${esc(ip)}" data-l="${esc(letter)}" data-q="${esc(rest.join(" "))}" onload="iconState[this.dataset.ip]=this.src.slice(0,60)" onerror="iconNext(this)">`;
 }
 const flash = {}; // per-server button label ("Copied!") kept in data so a row redraw can't wipe it
 function rowInner(s){
@@ -540,18 +541,28 @@ async function measurePing(ip, force){
   if(dlgIp === ip) renderInfo();
   let v;
   try{
+    // True ping can never be higher than any "you -> Worker -> server" route, so every route gives an upper bound and
+    // the lowest is the closest. This matters for anycast servers: the pinned regional Worker can sit far from the
+    // server location that is nearest to you, while the main Worker (nearest to you) finds it.
     const region = (S.find(x => x.ip === ip) || {}).region;
-    let m, used, lastError;
-    for(const url of [...new Set([REGION_WORKERS[region], PING_WORKER].filter(Boolean))]){
-      try{ m = await viaWorker(ip, url); used = url; break; }
-      catch(e){ lastError = e; if(e.reachable) break; } // only a Worker that isn't there is skipped; a real error is shown as it is
-    }
-    if(!m) throw lastError;
-    const key = ip + "|" + used;
-    const prev = workerBest[key] && Date.now() - workerBest[key].t < BEST_WINDOW ? workerBest[key] : {ws: Infinity};
-    const b = workerBest[key] = {t: Date.now(), vw: vwFloor(used, m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
-    v = {state:"done", cf: m.cf, ms: Math.max(1, Math.round(b.vw + b.ws)),
-      raw: `${m.cf ? "Behind Cloudflare. " : ""}You to Cloudflare${b.colo ? " (" + b.colo + ")" : ""}: ${Math.round(b.vw)} ms + Cloudflare to server${m.cf ? " (Minecraft ping)" : ""}: ${Math.round(b.ws)} ms. Worker: ${new URL(used).hostname.split(".")[0]}${REGION_WORKERS[region] && used !== REGION_WORKERS[region] ? " (the " + region + " Worker isn't available)" : ""}`};
+    const label = url => new URL(url).hostname.split(".")[0];
+    const urls = [...new Set([REGION_WORKERS[region], PING_WORKER].filter(Boolean))];
+    const settled = await Promise.allSettled(urls.map(url => viaWorker(ip, url)));
+    const routes = [], failed = [];
+    settled.forEach((r, i) => {
+      if(r.status !== "fulfilled"){ failed.push(r.reason); return; }
+      const m = r.value, key = ip + "|" + urls[i];
+      const prev = workerBest[key] && Date.now() - workerBest[key].t < BEST_WINDOW ? workerBest[key] : {ws: Infinity};
+      const b = workerBest[key] = {t: Date.now(), vw: vwFloor(urls[i], m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
+      routes.push({url: urls[i], m, b, total: b.vw + b.ws});
+    });
+    if(!routes.length) throw failed.find(e => e && e.reachable) || failed[0];
+    const best = routes.reduce((x, y) => y.total < x.total ? y : x);
+    const where = r => `${label(r.url)}${r.b.colo ? " (" + r.b.colo + ")" : ""}`;
+    v = {state:"done", cf: best.m.cf, ms: Math.max(1, Math.round(best.total)),
+      raw: `${best.m.cf ? "Behind Cloudflare. " : ""}You to Cloudflare${best.b.colo ? " (" + best.b.colo + ")" : ""}: ${Math.round(best.b.vw)} ms + Cloudflare to server${best.m.cf ? " (Minecraft ping)" : ""}: ${Math.round(best.b.ws)} ms. Worker: ${label(best.url)}`
+        + (routes.length > 1 ? `. Lowest of ${routes.length} routes: ${routes.map(r => `${where(r)} ${Math.round(r.total)} ms`).join(", ")}` : "")
+        + (failed.length ? `. Unavailable: ${failed.map(e => String((e && e.message) || e)).join("; ")}` : "")};
   }catch(e){
     v = {state:"error", raw: "Measurement failed: " + String((e && e.message) || e)};
   }
@@ -637,7 +648,7 @@ function renderInfo(){
   box.innerHTML = `
     <div><div class="pingbox"><div class="pv"><span>Ping (estimate)</span><b class="${pcls}"${p.raw ? ` title="${esc(p.raw)}"` : ""}>${pv}</b></div>
       <button class="btn alt" type="button" data-act="repeat"${busy ? " disabled" : ""}>Re-estimate</button></div>
-      <p class="dnote" style="margin-top:8px">${pnote}${busy ? "" : ` <button type="button" class="dbgbtn" data-act="debug">${showDebug ? "Hide debug" : "Show debug"}</button>`}</p>${showDebug && !busy ? `<p class="dbg">${esc(p.raw || "No details for this measurement.")}</p>` : ""}</div>
+      <p class="dnote" style="margin-top:8px">${pnote}${busy ? "" : ` <button type="button" class="dbgbtn" data-act="debug">${showDebug ? "Hide debug" : "Show debug"}</button>`}</p>${showDebug && !busy ? `<p class="dbg">${esc(p.raw || "No details for this measurement.")}<br>${esc("Icon: " + (!st || st.unknown ? "status unknown" : !st.icon ? "none reported by the status check" : iconState[s.ip] === "none" ? "no source returned an icon" : iconState[s.ip] ? "loaded from " + iconState[s.ip] : "loading"))}</p>` : ""}</div>
     <div><div class="dsec"><span>Information</span><a href="https://namemc.com/server/${encodeURIComponent(s.ip)}" target="_blank" rel="noopener">View on NameMC</a></div>
       <div class="kv">${kvRow("Version", ver)}${kvRow("Uptime", up === undefined ? "No data" : `${up.toFixed(1)}%`)}${kvRow("Location", loc)}${net}</div></div>`;
   box.scrollTop = top;
