@@ -1,6 +1,7 @@
 // GET /api/icon?name=<server> -> the server's own icon as an image (404 if it has none).
-// Three sources are tried at the same time and the first real icon wins:
-//   1. mcstatus.io   2. mcsrvstat.us   3. the Minecraft server itself (the same way the game's server list reads it)
+// Four sources are tried at the same time and the first real icon wins:
+//   1. mcstatus.io   2. mcsrvstat.us   3-4. the Minecraft server itself, asking as two different game versions
+//   (the same way the game's server list reads it)
 // Vercel's edge cache keeps the picture for a day, so each icon is only looked up once.
 const {listedServers, getJson, slpStatus, resolveTarget, dns} = require("./_shared");
 
@@ -16,17 +17,18 @@ function firstValid(tasks){
     }
   });
 }
-async function fromServer(name){
+async function fromServer(name, protocol){
   const t = await resolveTarget(name);
   const {address} = await dns.lookup(t.host);
-  return (await slpStatus(name, address, t.port, 4000)).favicon;
+  return (await slpStatus(name, address, t.port, 4000, protocol)).favicon;
 }
 async function findIcon(name){
   const q = encodeURIComponent(name);
   return firstValid([
     getJson(`https://api.mcstatus.io/v2/status/java/${q}?query=false&timeout=3`, 5000).then(d => d.icon),
     getJson(`https://api.mcsrvstat.us/3/${q}`, 5000).then(d => d.icon),
-    fromServer(name)
+    fromServer(name, 767),
+    fromServer(name, 776)   // some servers only answer fully for newer game versions
   ]);
 }
 
