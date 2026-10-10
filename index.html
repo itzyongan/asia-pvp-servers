@@ -480,17 +480,16 @@ function target(ip){
 const DEBUG_KEY = "as-pingdebug-v1";
 let showDebug = /[?&]pingdebug\b/.test(location.search) || (() => { try{ return localStorage.getItem(DEBUG_KEY) === "1"; }catch{ return false; } })();
 
-// Ping = your round trip to Cloudflare + Cloudflare's round trip to the server, both measured by the Worker setup.
-// Nothing is scaled or adjusted: the number shown is the sum of those two measurements.
+// Ping = your round trip to Cloudflare, timed on a warm connection to the Worker for the server's region.
+// Nothing is measured past Cloudflare, and nothing is scaled or adjusted.
 const PING_WORKER = AS_WORKER;
-// Regional Workers (see wrangler.toml) run near their region, so the "Cloudflare to server" leg starts close to the server.
-// A server uses the Worker for its region when that answers, and otherwise the main Worker above.
+// Regional Workers (see wrangler.toml) run near their region. A server uses the Worker for its region when that
+// answers, and otherwise the main Worker above.
 const REGION_WORKERS = {
   SG: "https://asia-pvp-sg.itzyongan.workers.dev",
   KR: "https://asia-pvp-kr.itzyongan.workers.dev",
   IN: "https://asia-pvp-in.itzyongan.workers.dev"
 };
-const workerBest = {};
 // Your round trip to a Worker doesn't depend on which server you open, so servers that use the same Worker share one floor.
 // A slow moment while the page is busy then can't inflate the next server's number.
 const vwBest = {};
@@ -499,53 +498,54 @@ const vwFloor = (base, v) => {
   if(!b || v < b.v || Date.now() - b.t > BEST_WINDOW) vwBest[base] = {v, t: Date.now()};
   return vwBest[base].v;
 };
-// Every open runs a new measurement, but each leg keeps the lowest value seen within this window. Delays only add time,
+// Every open runs a new measurement, but each Worker keeps the lowest value seen within this window. Delays only add time,
 // so this stops the number jumping up because of a momentary hiccup. Set it to 0 to show every run as-is.
 const BEST_WINDOW = 10 * 60 * 1000;
 let rttSeq = 0;
-// One timed request. The Workers and this site allow Resource Timing, which gives the time on the wire without the browser's own overhead.
+// One timed request. The Worker allows Resource Timing, which gives the time on the wire without the browser's own overhead.
 async function timedGet(base, path){
-  const url = `${base}${path}${path.includes("?") ? "&" : "?"}_=${++rttSeq}`, abs = new URL(url, location.href).href;
+  const url = `${base}${path}${path.includes("?") ? "&" : "?"}_=${++rttSeq}`;
   const t0 = performance.now();
   const r = await fetch(url, {cache:"no-store", credentials:"omit", referrerPolicy:"no-referrer", signal: AbortSignal.timeout(12000)});
   const body = await r.text();
   const dt = performance.now() - t0;
   let wire = dt;
   for(let i = 0; i < 4; i++){
-    const e = performance.getEntriesByName(abs).pop();
+    const e = performance.getEntriesByName(url).pop();
     if(e){ if(e.requestStart > 0 && e.responseStart > e.requestStart) wire = e.responseStart - e.requestStart; break; }
     await new Promise(res => setTimeout(res, 0));
   }
   return {r, body, wire: Math.max(1, Math.min(wire, dt))};
 }
-// Your round trips to a base address (timed on a warm connection) while one slower request, the server test, runs alongside.
-async function route(base, rttPath, testPath, who){
-  const rtt = async () => {
-    const x = await timedGet(base, rttPath);
-    if(!x.r.ok) throw new Error(`${who}: not available (HTTP ${x.r.status})`); // a missing function must not look like a fast round trip
-    return x.wire;
-  };
-  await rtt();                                         // opens the connection, so the next ones time one round trip
-  const test = timedGet(base, testPath);               // runs while we time the round trips
-  test.catch(() => {});
-  const xs = [];
-  for(let i = 0; i < 8; i++) xs.push(await rtt());
-  const {r, body} = await test;
-  let j = null; try{ j = JSON.parse(body); }catch{}
-  if(!j) throw new Error(`${who}: not available (HTTP ${r.status})`);
-  if(!r.ok || !j.ok){ const e = new Error(`${who}: ${j.error || "HTTP " + r.status}`); e.reachable = true; throw e; }
-  return {vw: Math.min(...xs), j};
-}
-async function viaWorker(ip, workerUrl){
+async function viaWorker(workerUrl){
   const base = workerUrl.replace(/\/+$/, ""), who = new URL(base).hostname.split(".")[0];
-  const {vw, j} = await route(base, "/rtt", `/tcp?name=${encodeURIComponent(ip)}`, who);
-  return {vw, ws: j.ms, colo: j.colo, cf: !!j.cloudflare};
+  const rtt = async () => {
+    const x = await timedGet(base, "/rtt");
+    if(!x.r.ok) throw new Error(`${who}: not available (HTTP ${x.r.status})`);
+    return x;
+  };
+  const first = await rtt();                           // opens the connection, so the next ones time one round trip
+  const xs = [];
+  for(let i = 0; i < 8; i++) xs.push((await rtt()).wire);
+  return {vw: Math.min(...xs), colo: (/^ok (\S+)/.exec(first.body) || [])[1] || null}; // newer Workers also say where they run
 }
-// Singapore route: this site's own functions run in Singapore (see vercel.json), so this measures you -> Singapore -> server,
-// whatever Cloudflare location your connection to Cloudflare happens to end up at.
-async function viaVercel(ip){
-  const {vw, j} = await route("", "/api/rtt", `/api/ping?name=${encodeURIComponent(ip)}`, "singapore");
-  return {vw, ws: j.ping, colo: "sin1", cf: false};
+// Servers behind Cloudflare are recognised by their address.
+const CF_V4 = ["173.245.48.0/20", "103.21.244.0/22", "103.22.200.0/22", "103.31.4.0/22", "141.101.64.0/18", "108.162.192.0/18",
+  "190.93.240.0/20", "188.114.96.0/20", "197.234.240.0/22", "198.41.128.0/17", "162.158.0.0/15", "104.16.0.0/13",
+  "104.24.0.0/14", "172.64.0.0/13", "131.0.72.0/22"];
+const CF_V6 = ["2400:cb00:", "2606:4700:", "2803:f800:", "2405:b500:", "2405:8100:", "2a06:98c", "2c0f:f248:"];
+function ipv4ToInt(ip){
+  const p = String(ip).split(".");
+  if(p.length !== 4) return null;
+  let n = 0;
+  for(const x of p){ const v = Number(x); if(!x || !Number.isInteger(v) || v < 0 || v > 255) return null; n = n * 256 + v; }
+  return n;
+}
+function isCloudflareIp(ip){
+  if(!ip) return false;
+  const n = ipv4ToInt(ip);
+  if(n !== null) return CF_V4.some(c => { const [b, bits] = c.split("/"), base = ipv4ToInt(b); return n >= base && n < base + 2 ** (32 - Number(bits)); });
+  return CF_V6.some(p => String(ip).toLowerCase().startsWith(p));
 }
 async function measurePing(ip, force){
   if(pingBusy[ip]) return;
@@ -555,32 +555,16 @@ async function measurePing(ip, force){
   if(dlgIp === ip) renderInfo();
   let v;
   try{
-    // True ping can never be higher than any "you -> somewhere -> server" route, so every route gives an upper bound and the
-    // lowest is the closest. Cloudflare decides where your connection enters its network and that can't be forced, so a
-    // route through the Singapore functions of this site is measured as well. Anycast servers answer from the location
-    // nearest to wherever the measuring happens, which is another reason to look at more than one route.
     const region = (S.find(x => x.ip === ip) || {}).region;
-    const label = url => new URL(url).hostname.split(".")[0];
-    const jobs = [...new Set([REGION_WORKERS[region], PING_WORKER].filter(Boolean))].map(url => ({name: label(url), floor: url, run: () => viaWorker(ip, url)}));
-    jobs.push({name: "singapore", floor: "singapore", run: () => viaVercel(ip)});
-    const settled = await Promise.allSettled(jobs.map(j => j.run()));
-    const routes = [], failed = [];
-    settled.forEach((r, i) => {
-      if(r.status !== "fulfilled"){ failed.push({name: jobs[i].name, error: r.reason}); return; }
-      const m = r.value, job = jobs[i], key = ip + "|" + job.floor;
-      const prev = workerBest[key] && Date.now() - workerBest[key].t < BEST_WINDOW ? workerBest[key] : {ws: Infinity};
-      const b = workerBest[key] = {t: Date.now(), vw: vwFloor(job.floor, m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
-      routes.push({name: job.name, m, b, total: b.vw + b.ws});
-    });
-    // Short, readable debug text: the route that won, its two legs, and a plain-words note about anything that didn't work.
-    const group = n => n === "singapore" ? "Singapore" : "Cloudflare";
-    const plain = e => String((e && e.message) || e).replace(/^[a-z0-9-]+: /i, ""); // drop the Worker's name
-    const why = e => /cannot connect|proxy request failed/i.test(plain(e)) ? "can't reach this server" : /timed out/i.test(plain(e)) ? "timed out" : /not available/i.test(plain(e)) ? "not available" : plain(e).slice(0, 60);
-    if(!routes.length) throw new Error([...new Set(failed.map(f => `${group(f.name)} ${why(f.error)}`))].join(", "));
-    const best = routes.reduce((x, y) => y.total < x.total ? y : x);
-    const place = best.name === "singapore" ? "Singapore" : "Cloudflare" + (best.b.colo ? " " + best.b.colo : "");
-    const lines = [`Via ${place} · ${Math.round(best.b.vw)} ms to ${group(best.name)} + ${Math.round(best.b.ws)} ms to the server`];
-    v = {state:"done", route: best.name === "singapore" ? "singapore" : "cloudflare", cf: best.m.cf, ms: Math.max(1, Math.round(best.total)), raw: lines.join("\n")};
+    let m, used, lastError;
+    for(const url of [...new Set([REGION_WORKERS[region], PING_WORKER].filter(Boolean))]){
+      try{ m = await viaWorker(url); used = url; break; }
+      catch(e){ lastError = e; } // regional Worker missing: use the main one
+    }
+    if(!m) throw lastError;
+    const vw = vwFloor(used, m.vw); // noise only adds time
+    v = {state:"done", cf: isCloudflareIp(state.status[ip]?.addr), ms: Math.max(1, Math.round(vw)),
+      raw: `Via Cloudflare${m.colo ? " " + m.colo : ""} · ${Math.round(vw)} ms`};
   }catch(e){
     v = {state:"error", raw: "Couldn't measure: " + String((e && e.message) || e)};
   }
@@ -649,7 +633,7 @@ function renderInfo(){
   const p = pingUi[s.ip] || {state:"measuring"}, busy = p.state === "measuring";
   const pv = p.state === "done" ? `≈ ${p.ms} ms` : p.state === "error" ? "Unavailable" : "Measuring…";
   const pcls = p.state === "done" ? (p.ms < 60 ? "ok" : p.ms < 120 ? "" : "bad") : "mut";
-  const pnote = p.state === "done" ? (p.cf ? "Behind Cloudflare" : "Estimate")
+  const pnote = p.state === "done" ? (p.cf ? "Server is behind Cloudflare" : "")
     : p.state === "error" ? "Couldn't measure. Try Re-estimate."
     : "Measuring…";
 
@@ -664,7 +648,7 @@ function renderInfo(){
 
   const box = $("#dlg-body"), top = box.scrollTop;
   box.innerHTML = `
-    <div><div class="pingbox"><div class="pv"><span>Ping (estimate)</span><b class="${pcls}"${p.raw ? ` title="${esc(p.raw)}"` : ""}>${pv}</b></div>
+    <div><div class="pingbox"><div class="pv"><span>Ping to Cloudflare</span><b class="${pcls}"${p.raw ? ` title="${esc(p.raw)}"` : ""}>${pv}</b></div>
       <button class="btn alt" type="button" data-act="repeat"${busy ? " disabled" : ""}>Re-estimate</button></div>
       <p class="dnote" style="margin-top:8px">${pnote}${busy ? "" : ` <button type="button" class="dbgbtn" data-act="debug">${showDebug ? "Hide debug" : "Show debug"}</button>`}</p>${showDebug && !busy ? `<p class="dbg">${esc(p.raw || "No details for this measurement.")}</p>` : ""}</div>
     <div><div class="dsec"><span>Information</span><a href="https://namemc.com/server/${encodeURIComponent(s.ip)}" target="_blank" rel="noopener">View on NameMC</a></div>
