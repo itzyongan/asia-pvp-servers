@@ -128,7 +128,7 @@ body:has(dialog[open]){overflow:hidden}
 .tile b.ok{color:#bfe8a6}.tile b.bad{color:#f0b3b4}.tile b.mut{color:var(--muted)}
 .dnote{color:var(--muted);font-size:14px}
 .dbgbtn{background:none;border:0;padding:0;color:var(--diamond);font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
-.dbg{margin-top:6px;padding:8px 10px;background:#111317;border:2px solid var(--line);color:var(--muted);font:12.5px/1.5 ui-monospace,"Courier New",monospace;overflow-wrap:anywhere;white-space:pre-line}
+.dbg{margin-top:6px;padding:8px 10px;background:#111317;border:2px solid var(--line);color:var(--muted);font:13px/1.5 var(--body);overflow-wrap:anywhere}
 .dnote a{color:var(--diamond);text-underline-offset:3px}
 .btn:disabled{opacity:.5;cursor:default;filter:none}
 .pingbox{display:flex;align-items:center;gap:12px;background:#111317;border:2px solid var(--line);padding:10px 12px}
@@ -575,22 +575,14 @@ async function measurePing(ip, force){
     // Short, readable debug text: the route that won, its two legs, and a plain-words note about anything that didn't work.
     const group = n => n === "singapore" ? "Singapore" : "Cloudflare";
     const plain = e => String((e && e.message) || e).replace(/^[a-z0-9-]+: /i, ""); // drop the Worker's name
-    const why = e => /cannot connect|proxy request failed|timed out/i.test(plain(e)) ? "can't reach this server" : /not available/i.test(plain(e)) ? "not available" : "failed";
-    if(!routes.length) throw new Error([...new Set(failed.map(f => `${group(f.name)}: ${plain(f.error)}`))].join("\n"));
+    const why = e => /cannot connect|proxy request failed/i.test(plain(e)) ? "can't reach this server" : /timed out/i.test(plain(e)) ? "timed out" : /not available/i.test(plain(e)) ? "not available" : plain(e).slice(0, 60);
+    if(!routes.length) throw new Error([...new Set(failed.map(f => `${group(f.name)} ${why(f.error)}`))].join(", "));
     const best = routes.reduce((x, y) => y.total < x.total ? y : x);
-    const where = r => group(r.name) + (r.b.colo ? ` (${r.b.colo})` : "");
-    const others = [...new Set(routes.filter(r => r !== best).map(r => `${where(r)} ${Math.round(r.total)} ms`))];
-    const down = [...new Set(failed.map(f => `${group(f.name)} ${why(f.error)}`))];
-    const lines = [
-      `Route: ${where(best)}${best.m.cf ? ", server is behind Cloudflare" : ""}`,
-      `You to ${group(best.name)}: ${Math.round(best.b.vw)} ms`,
-      `${group(best.name)} to server: ${Math.round(best.b.ws)} ms`
-    ];
-    if(others.length) lines.push(`Also tried: ${others.join(", ")}`);
-    if(down.length) lines.push(`Not available: ${down.join(", ")}`);
+    const place = best.name === "singapore" ? "Singapore" : "Cloudflare" + (best.b.colo ? " " + best.b.colo : "");
+    const lines = [`Via ${place} · ${Math.round(best.b.vw)} ms to ${group(best.name)} + ${Math.round(best.b.ws)} ms to the server${best.m.cf ? " · server is behind Cloudflare" : ""}`];
     v = {state:"done", route: best.name === "singapore" ? "singapore" : "cloudflare", cf: best.m.cf, ms: Math.max(1, Math.round(best.total)), raw: lines.join("\n")};
   }catch(e){
-    v = {state:"error", raw: "Measurement failed\n" + String((e && e.message) || e)};
+    v = {state:"error", raw: "Couldn't measure: " + String((e && e.message) || e)};
   }
   pingCache[ip] = {t: Date.now(), v}; pingUi[ip] = v; pingBusy[ip] = false;
   if(dlgIp === ip) renderInfo();
