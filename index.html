@@ -649,8 +649,8 @@ function renderInfo(){
   const p = pingUi[s.ip] || {state:"measuring"}, busy = p.state === "measuring";
   const pv = p.state === "done" ? `≈ ${p.ms} ms` : p.state === "error" ? "Unavailable" : "Measuring…";
   const pcls = p.state === "done" ? (p.ms < 60 ? "ok" : p.ms < 120 ? "" : "bad") : "mut";
-  const pnote = p.state === "done" ? (p.cf ? "Behind Cloudflare. In-game ping may differ slightly." : "Estimate. In-game ping may differ slightly.")
-    : p.state === "error" ? "Couldn't measure the ping. Try Re-estimate."
+  const pnote = p.state === "done" ? (p.cf ? "Behind Cloudflare" : "Estimate")
+    : p.state === "error" ? "Couldn't measure. Try Re-estimate."
     : "Measuring…";
 
   const ver = st && !st.unknown && st.version ? esc(st.version) : "–";
