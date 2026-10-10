@@ -579,7 +579,7 @@ async function measurePing(ip, force){
     if(!routes.length) throw new Error([...new Set(failed.map(f => `${group(f.name)} ${why(f.error)}`))].join(", "));
     const best = routes.reduce((x, y) => y.total < x.total ? y : x);
     const place = best.name === "singapore" ? "Singapore" : "Cloudflare" + (best.b.colo ? " " + best.b.colo : "");
-    const lines = [`Via ${place} · ${Math.round(best.b.vw)} ms to ${group(best.name)} + ${Math.round(best.b.ws)} ms to the server${best.m.cf ? " · server is behind Cloudflare" : ""}`];
+    const lines = [`Via ${place} · ${Math.round(best.b.vw)} ms to ${group(best.name)} + ${Math.round(best.b.ws)} ms to the server`];
     v = {state:"done", route: best.name === "singapore" ? "singapore" : "cloudflare", cf: best.m.cf, ms: Math.max(1, Math.round(best.total)), raw: lines.join("\n")};
   }catch(e){
     v = {state:"error", raw: "Couldn't measure: " + String((e && e.message) || e)};
@@ -649,7 +649,9 @@ function renderInfo(){
   const p = pingUi[s.ip] || {state:"measuring"}, busy = p.state === "measuring";
   const pv = p.state === "done" ? `≈ ${p.ms} ms` : p.state === "error" ? "Unavailable" : "Measuring…";
   const pcls = p.state === "done" ? (p.ms < 60 ? "ok" : p.ms < 120 ? "" : "bad") : "mut";
-  const pnote = p.state === "done" ? (p.route === "singapore" ? "Estimated from your connection to Singapore plus Singapore's connection to the server. In-game ping can differ slightly." : p.cf ? "Behind Cloudflare: your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly." : "Your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly.")
+  const pnote = p.state === "done" ? (p.route === "singapore" ? "Estimated as the time from you to Singapore plus the time from Singapore to the server. In-game ping may differ slightly."
+      : p.cf ? "This server is behind Cloudflare. Estimated as the time from you to Cloudflare plus the time from Cloudflare to the server. In-game ping may differ slightly."
+      : "Estimated as the time from you to a nearby Cloudflare location plus the time from there to the server. In-game ping may differ slightly.")
     : p.state === "error" ? "Couldn't measure the ping right now. Try Re-estimate."
     : "Measuring the ping…";
 
