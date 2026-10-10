@@ -128,7 +128,7 @@ body:has(dialog[open]){overflow:hidden}
 .tile b.ok{color:#bfe8a6}.tile b.bad{color:#f0b3b4}.tile b.mut{color:var(--muted)}
 .dnote{color:var(--muted);font-size:14px}
 .dbgbtn{background:none;border:0;padding:0;color:var(--diamond);font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
-.dbg{margin-top:6px;padding:8px 10px;background:#111317;border:2px solid var(--line);color:var(--muted);font:12.5px/1.5 ui-monospace,"Courier New",monospace;overflow-wrap:anywhere}
+.dbg{margin-top:6px;padding:8px 10px;background:#111317;border:2px solid var(--line);color:var(--muted);font:12.5px/1.5 ui-monospace,"Courier New",monospace;overflow-wrap:anywhere;white-space:pre-line}
 .dnote a{color:var(--diamond);text-underline-offset:3px}
 .btn:disabled{opacity:.5;cursor:default;filter:none}
 .pingbox{display:flex;align-items:center;gap:12px;background:#111317;border:2px solid var(--line);padding:10px 12px}
@@ -566,21 +566,31 @@ async function measurePing(ip, force){
     const settled = await Promise.allSettled(jobs.map(j => j.run()));
     const routes = [], failed = [];
     settled.forEach((r, i) => {
-      if(r.status !== "fulfilled"){ failed.push(r.reason); return; }
+      if(r.status !== "fulfilled"){ failed.push({name: jobs[i].name, error: r.reason}); return; }
       const m = r.value, job = jobs[i], key = ip + "|" + job.floor;
       const prev = workerBest[key] && Date.now() - workerBest[key].t < BEST_WINDOW ? workerBest[key] : {ws: Infinity};
       const b = workerBest[key] = {t: Date.now(), vw: vwFloor(job.floor, m.vw), ws: Math.min(prev.ws, m.ws), colo: m.colo}; // noise only adds time
       routes.push({name: job.name, m, b, total: b.vw + b.ws});
     });
-    if(!routes.length) throw failed.find(e => e && e.reachable) || failed[0];
+    // Short, readable debug text: the route that won, its two legs, and a plain-words note about anything that didn't work.
+    const group = n => n === "singapore" ? "Singapore" : "Cloudflare";
+    const plain = e => String((e && e.message) || e).replace(/^[a-z0-9-]+: /i, ""); // drop the Worker's name
+    const why = e => /cannot connect|proxy request failed|timed out/i.test(plain(e)) ? "can't reach this server" : /not available/i.test(plain(e)) ? "not available" : "failed";
+    if(!routes.length) throw new Error([...new Set(failed.map(f => `${group(f.name)}: ${plain(f.error)}`))].join("\n"));
     const best = routes.reduce((x, y) => y.total < x.total ? y : x);
-    const where = r => `${r.name}${r.b.colo ? " (" + r.b.colo + ")" : ""}`;
-    v = {state:"done", cf: best.m.cf, ms: Math.max(1, Math.round(best.total)),
-      raw: `${best.m.cf ? "Behind Cloudflare. " : ""}You to ${best.name === "singapore" ? "Singapore" : "Cloudflare"}${best.b.colo ? " (" + best.b.colo + ")" : ""}: ${Math.round(best.b.vw)} ms + ${best.name === "singapore" ? "Singapore" : "Cloudflare"} to server${best.m.cf ? " (Minecraft ping)" : ""}: ${Math.round(best.b.ws)} ms. Route: ${best.name}`
-        + (routes.length > 1 ? `. Lowest of ${routes.length}: ${routes.map(r => `${where(r)} ${Math.round(r.total)} ms`).join(", ")}` : "")
-        + (failed.length ? `. Unavailable: ${failed.map(e => String((e && e.message) || e)).join("; ")}` : "")};
+    const where = r => group(r.name) + (r.b.colo ? ` (${r.b.colo})` : "");
+    const others = [...new Set(routes.filter(r => r !== best).map(r => `${where(r)} ${Math.round(r.total)} ms`))];
+    const down = [...new Set(failed.map(f => `${group(f.name)} ${why(f.error)}`))];
+    const lines = [
+      `Route: ${where(best)}${best.m.cf ? ", server is behind Cloudflare" : ""}`,
+      `You to ${group(best.name)}: ${Math.round(best.b.vw)} ms`,
+      `${group(best.name)} to server: ${Math.round(best.b.ws)} ms`
+    ];
+    if(others.length) lines.push(`Also tried: ${others.join(", ")}`);
+    if(down.length) lines.push(`Not available: ${down.join(", ")}`);
+    v = {state:"done", route: best.name === "singapore" ? "singapore" : "cloudflare", cf: best.m.cf, ms: Math.max(1, Math.round(best.total)), raw: lines.join("\n")};
   }catch(e){
-    v = {state:"error", raw: "Measurement failed: " + String((e && e.message) || e)};
+    v = {state:"error", raw: "Measurement failed\n" + String((e && e.message) || e)};
   }
   pingCache[ip] = {t: Date.now(), v}; pingUi[ip] = v; pingBusy[ip] = false;
   if(dlgIp === ip) renderInfo();
@@ -647,7 +657,7 @@ function renderInfo(){
   const p = pingUi[s.ip] || {state:"measuring"}, busy = p.state === "measuring";
   const pv = p.state === "done" ? `≈ ${p.ms} ms` : p.state === "error" ? "Unavailable" : "Measuring…";
   const pcls = p.state === "done" ? (p.ms < 60 ? "ok" : p.ms < 120 ? "" : "bad") : "mut";
-  const pnote = p.state === "done" ? (p.cf ? "Behind Cloudflare: your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly." : "Your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly.")
+  const pnote = p.state === "done" ? (p.route === "singapore" ? "Estimated from your connection to Singapore plus Singapore's connection to the server. In-game ping can differ slightly." : p.cf ? "Behind Cloudflare: your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly." : "Your connection to Cloudflare plus Cloudflare's connection to the server. In-game ping can differ slightly.")
     : p.state === "error" ? "Couldn't measure the ping right now. Try Re-estimate."
     : "Measuring the ping…";
 
