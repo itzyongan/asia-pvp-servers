@@ -18,12 +18,15 @@
 // Every server's status in one request, started now so it runs while the page and README load.
 // This site's own /api/status is tried first (edge-cached, same connection as the page); the Worker is the backup.
 var AS_WORKER = "https://asia-pvp-servers.itzyongan.workers.dev";
-function asStatus(){
-  return fetch("/api/status", {cache: "no-store"}).then(function(r){ if(!r.ok) throw 0; return r.json(); })
+// A manual refresh (F5, the reload button) re-checks everything instead of reusing saved copies.
+var AS_RELOAD = (function(){ try{ var n = performance.getEntriesByType("navigation")[0]; return !!n && n.type === "reload"; }catch(e){ return false; } })();
+var AS_BUST = AS_RELOAD ? String(Date.now()) : "";
+function asStatus(bust){
+  return fetch("/api/status" + (bust ? "?fresh=" + Date.now() : ""), {cache: "no-store"}).then(function(r){ if(!r.ok) throw 0; return r.json(); })
     .catch(function(){ return fetch(AS_WORKER + "/status", {cache: "no-store"}).then(function(r){ return r.ok ? r.json() : null; }); })
     .catch(function(){ return null; });
 }
-window.__status = asStatus();
+window.__status = asStatus(AS_RELOAD); // on a refresh this skips the edge cache and builds a new copy
 </script>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap"></noscript>
@@ -240,6 +243,7 @@ body:has(dialog[open]){overflow:hidden}
 
 <script>
 const $ = s => document.querySelector(s);
+if(AS_RELOAD){ try{ localStorage.removeItem("as-net-v2"); }catch{} } // location / network info is looked up again
 // Live status from the last visit (up to 1 hour old) is shown dimmed for an instant first paint.
 // Every page load re-checks every server, and each row brightens once its fresh numbers arrive.
 const CACHE_KEY = "as-status-v7", MAX_AGE = 60*60*1000;
@@ -322,7 +326,7 @@ function parse(md){
 async function load(){
   for(const url of README_URLS){
     try{
-      const r = await fetch(url, {cache:"no-cache"});
+      const r = await fetch(url, {cache: AS_RELOAD ? "reload" : "no-cache"});
       if(!r.ok) continue;
       const data = parse(await r.text());
       if(data.length) return data;
@@ -348,7 +352,8 @@ const chip = (label,v) => {
 function iconSrcs(ip, icon){
   if(typeof icon === "string" && icon.startsWith("data:")) return [icon];
   const q = encodeURIComponent(ip);
-  const own = [`/api/icon?name=${q}`, `${AS_WORKER}/icon?name=${q}`]; // these only ever return the server's real icon
+  const bust = AS_BUST ? `&r=${AS_BUST}` : "";
+  const own = [`/api/icon?name=${q}${bust}`, `${AS_WORKER}/icon?name=${q}${bust}`]; // these only ever return the server's real icon
   // "try": the status lookup didn't see an icon, so only the sources that never return a placeholder are asked
   return icon === "try" ? own : [...own, `https://api.mcstatus.io/v2/icon/${q}`, `https://api.mcsrvstat.us/icon/${q}`];
 }
