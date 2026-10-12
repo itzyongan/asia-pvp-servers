@@ -39,7 +39,8 @@ module.exports = async (req, res) => {
     const results = await Promise.all(ips.map(ip => Promise.race([checkOne(ip), late])));   // all servers at once, none holds the others up
     const s = {};
     ips.forEach((ip, i) => { if(results[i]) s[ip] = results[i]; });
-    res.setHeader("Cache-Control", "public, s-maxage=20, stale-while-revalidate=86400");
+    // ?fresh=... is sent by the page after a manual refresh: answer with a new check and don't store it
+    res.setHeader("Cache-Control", req.query && req.query.fresh ? "no-store" : "public, s-maxage=20, stale-while-revalidate=86400");
     res.status(200).json({t: Date.now(), s});
   }catch(e){
     res.setHeader("Cache-Control", "no-store");
