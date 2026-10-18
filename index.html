@@ -14,17 +14,8 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%235fa83a'/%3E%3Crect y='5' width='16' height='11' fill='%238a5a33'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<script>
-// Every server's status in one request, started now so it runs while the page and README load.
-// A manual refresh (F5, the reload button) skips the saved copies and re-checks everything.
-var RELOAD = (function(){ try{ var n = performance.getEntriesByType("navigation")[0]; return !!n && n.type === "reload"; }catch(e){ return false; } })();
-var BUST = RELOAD ? String(Date.now()) : "";
-function fetchStatus(bust){
-  return fetch("/api/status" + (bust ? "?fresh=" + Date.now() : ""), {cache: "no-store"})
-    .then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; });
-}
-window.__status = fetchStatus(RELOAD);
-</script>
+<link rel="preconnect" href="https://api.mcstatus.io" crossorigin>
+<link rel="dns-prefetch" href="https://api.mcsrvstat.us">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap"></noscript>
 <style>
@@ -220,6 +211,8 @@ body:has(dialog[open]){overflow:hidden}
 <script>
 const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// A manual refresh (F5, the reload button) re-reads the README from the network and looks everything up again.
+const RELOAD = (() => { try{ return performance.getEntriesByType("navigation")[0]?.type === "reload"; }catch{ return false; } })();
 const store = { // localStorage that never throws (private mode, full disk ...)
   get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch{ return null; } },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} },
@@ -227,9 +220,10 @@ const store = { // localStorage that never throws (private mode, full disk ...)
 };
 
 // ---------------------------------------------------------------------------------------------------------------
-// README.md is the single source for the list. Edit its tables and commit: the site follows by itself, both on the next
-// visit and, while the page is open, within a few minutes. The copy deployed next to this page is read first; GitHub raw
-// is only a backup because it caches for about 5 minutes.
+// README.md is the single source for the list. This page only ever READS it (plain GET requests) and never writes to it.
+// Edit the README tables and commit: the site follows by itself, both on the next visit and, while the page is open,
+// within a few minutes. The copy deployed next to this page is read first; GitHub raw is only a backup because it caches
+// for about 5 minutes.
 // ---------------------------------------------------------------------------------------------------------------
 const README_URLS = ["/README.md", "https://raw.githubusercontent.com/itzyongan/asia-pvp-servers/main/README.md"];
 const SECTIONS = { // wording for the two known sections; any other heading that has a server table is shown under its own name
@@ -287,11 +281,12 @@ async function load(force){
 }
 
 // ---- state ----
-const STATUS_KEY = "as-status-v7", STATUS_AGE = 60*60*1000, LIST_KEY = "as-list-v2";
+const STATUS_KEY = "as-status-v8", STATUS_AGE = 60*60*1000, LIST_KEY = "as-list-v2";
 const fresh = new Set(); // servers whose numbers were refreshed during this page load
 const saved = store.get(STATUS_KEY);
 const state = {mode:"all", q:"", region:"all", sort:"default", status: saved && Date.now() - saved.t < STATUS_AGE ? saved.d : {}};
-const saveStatus = () => store.set(STATUS_KEY, {t: Date.now(), d: Object.fromEntries(Object.entries(state.status).filter(([, v]) => !v.unknown))});
+// Saved for the next visit's instant first paint. Pictures stay out of it (they are large); a flag tells the next visit to load them.
+const saveStatus = () => store.set(STATUS_KEY, {t: Date.now(), d: Object.fromEntries(Object.entries(state.status).filter(([, v]) => !v.unknown).map(([k, v]) => [k, {...v, icon: v.icon ? "remote" : null}]))});
 let S = [];
 if(RELOAD) store.del("as-net-v2"); // location / network info is looked up again after a refresh
 
@@ -338,13 +333,13 @@ async function getJson(url, ms){
   } finally { clearTimeout(timer); }
 }
 
-// Server icons are tried from several places in turn: this site's /api/icon (several sources, edge-cached), then two
-// public icon services, and finally the letter tile. "try" means the status check saw no icon, so only /api/icon,
-// which never returns a placeholder, is asked.
+// A server's icon comes straight from its status check (a data address). On the next visit, when that isn't kept, it is loaded
+// from the two public icon services in turn, and a letter tile is the last resort. Servers whose check saw no icon get the
+// letter tile right away, so the services' stand-in picture is never shown.
 function iconSrcs(ip, icon){
   if(isIcon(icon)) return [icon];
-  const q = encodeURIComponent(ip), own = `/api/icon?name=${q}${BUST ? "&r=" + BUST : ""}`;
-  return icon === "try" ? [own] : [own, `https://api.mcstatus.io/v2/icon/${q}`, `https://api.mcsrvstat.us/icon/${q}`];
+  const q = encodeURIComponent(ip);
+  return [`https://api.mcstatus.io/v2/icon/${q}`, `https://api.mcsrvstat.us/icon/${q}`];
 }
 function iconNext(img){
   const rest = (img.dataset.q || "").split(" ").filter(Boolean), next = rest.shift();
@@ -516,7 +511,7 @@ function renderInfo(){
   const n = infoUi[s.ip], v = n?.state === "done" ? n.v : null, wait = !n || n.state === "loading";
   const rows = [
     kvRow("Version", known && st.version ? esc(st.version) : "–"),
-    kvRow("Uptime", typeof s.uptime === "number" ? `${s.uptime.toFixed(1)}%` : "No data"),
+    ...(typeof s.uptime === "number" ? [kvRow("Uptime", `${s.uptime.toFixed(1)}%`)] : []),
     kvRow("Location", v ? `${flagOf(v.cc)} ${esc([v.city, v.region, v.cc].filter(Boolean).join(", "))}` : wait ? "Locating…" : "Unavailable")
   ];
   if(v){
@@ -554,20 +549,19 @@ $("#out").addEventListener("click", e => {
 });
 
 // ---- live status ----
-// First choice: this site's /api/status, one cached answer for every server. Anything it couldn't tell is looked up here
-// directly: mcstatus.io first, and mcsrvstat.us as a second opinion before a server is called offline.
+// Each server is asked from here: mcstatus.io first, and mcsrvstat.us as a second opinion before a server is called offline.
 async function lookup(ip){
   const q = encodeURIComponent(ip);
   let first = null;
   try{
-    const d = await getJson(`https://api.mcstatus.io/v2/status/java/${q}?query=false&timeout=4`, 7000), v = d.version;
+    const d = await getJson(`https://api.mcstatus.io/v2/status/java/${q}?query=false&timeout=3`, 5000), v = d.version;
     first = {online: !!d.online, players: num(d.players?.online), icon: isIcon(d.icon) ? d.icon : null,
       version: v?.name_clean ?? (typeof v?.name === "string" ? v.name : null),
       addr: d.ip_address || null, port: d.srv_record?.port || d.port || null};
     if(first.online) return first;
   }catch{}
   try{
-    const d = await getJson(`https://api.mcsrvstat.us/3/${q}`, 9000);
+    const d = await getJson(`https://api.mcsrvstat.us/3/${q}`, 6000);
     if(d.online || !first) return {online: !!d.online, players: num(d.players?.online), icon: isIcon(d.icon) ? d.icon : null, version: typeof d.version === "string" ? d.version : null};
   }catch{}
   return first; // null means both services failed
@@ -580,6 +574,7 @@ async function checkServer(s){
   const cur = S.find(x => x.ip === s.ip), li = $(`.srv[data-ip="${CSS.escape(s.ip)}"]`);
   if(li && cur) li.innerHTML = rowInner(cur);
   if(dlgIp === s.ip) renderInfo();
+  showOnline();
 }
 async function runPool(list, n){
   const queue = [...list];
@@ -589,31 +584,10 @@ function showOnline(){
   const on = S.filter(s => state.status[s.ip]?.online);
   if(on.length) $("#online").innerHTML = `<b>${on.reduce((n, s) => n + state.status[s.ip].players, 0)}</b> players online now`;
 }
-async function loadStatus(){
-  const early = window.__status; window.__status = null; // the request started in <head> is used once
-  let j = await (early || fetchStatus());
-  for(let round = 0; j?.s && round < 6; round++){
-    const old = j.t && Date.now() - j.t > 60000; // an older copy was served while a new one is being made
-    let n = 0;
-    for(const s of S){
-      const x = j.s[s.ip]; if(!x) continue;
-      state.status[s.ip] = {
-        online: !!x.online, players: num(x.players),
-        icon: x.icon ? "remote" : (x.online ? "try" : null), // the picture is loaded separately, see iconSrcs
-        version: x.version ? String(x.version).slice(0, 40) : null, addr: x.addr || null, port: x.port || null
-      };
-      if(!old) fresh.add(s.ip); // an old copy is shown dimmed until the fresh one arrives
-      n++;
-    }
-    if(n) keepAnchor(render); // one redraw for all rows
-    if(!old) return;
-    await sleep(3000);
-    j = await fetchStatus();
-  }
-}
 async function checkAll(){
-  await loadStatus();
-  await runPool(S.filter(s => !fresh.has(s.ip)), 6); // anything /api/status couldn't tell is looked up directly
+  const order = [...$$(".srv")].map(r => r.dataset.ip), pos = ip => { const i = order.indexOf(ip); return i < 0 ? 1e9 : i; };
+  const todo = S.filter(s => !fresh.has(s.ip)).sort((a, b) => pos(a.ip) - pos(b.ip)); // top of the page first
+  await runPool(todo, 8);
   const failed = S.filter(s => !fresh.has(s.ip));
   if(failed.length){ await sleep(2500); await runPool(failed, 2); } // one gentle retry
   saveStatus(); showOnline();
