@@ -12,7 +12,7 @@
 ## 💎 Premium Servers
 | Server IP | Region | Duels | FFA | Sandbox |
 |--------|---------|-------|-----|---------|
-| <details><summary>⭐ as.catpvp.xyz</summary><br>**Alternative Routing**<br>• `pvp.com`<br>• `pvp1.com`</details> | 🇸🇬 | ✅ | `-` | `-` |
+| <details><summary>⭐ as.catpvp.xyz</summary><br>**Alternative Routing**<br>• `as-ovh.catpvp.xyz` - OVH<br>• `as-cf.catpvp.net` - Cloudflare<br>• `as2.catpvp.xyz` - TCPShield (GSL)<br>• `as3.catpvp.xyz` - Servers.com (GSL)</details> | 🇸🇬 | ✅ | `-` | `-` |
 | <details><summary>⭐ as.mcpvp.club</summary><br>**Alternative Routing**<br>• `pvp.com`<br>• `pvp1.com`</details> | 🇸🇬 | ✅ | ❌ | ❌ |
 | <details><summary>⭐ as.minemen.club</summary><br>**Alternative Routing**<br>• `pvp.com`<br>• `pvp1.com`</details> | 🇸🇬 | ✅ | ❔ | ❌ |
 | <details><summary>⭐ as.stray.gg</summary><br>**Alternative Routing**<br>• `pvp.com`<br>• `pvp1.com`</details> | 🇸🇬 | ❌ | ✅ | ✅ |
