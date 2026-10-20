@@ -118,7 +118,11 @@ body:has(dialog[open]){overflow:hidden}
 .kr:first-child{border-top:0}
 .kr>span{color:var(--muted)}
 .kr>b{font-weight:500;text-align:right;min-width:0;overflow-wrap:anywhere}
-.kr small{grid-column:1/-1;text-align:right;color:var(--muted);font-size:12.5px}
+.kr.rt{grid-template-columns:1fr auto}
+.kr.rt>b{text-align:left}
+.kr.rt>span{text-align:right}
+.kr.rt small{justify-content:flex-start}
+.kr small{grid-column:1/-1;display:flex;justify-content:flex-end;color:var(--muted);font-size:12.5px}
 .df{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:3px solid #000;background:var(--stone-hi);font-size:14px}
 .fl{display:flex;flex-wrap:wrap;gap:4px 16px;min-width:0}
 .df a{color:var(--diamond);text-underline-offset:3px}
@@ -274,10 +278,26 @@ function cellIp(x){
   return m ? m[0] : t.trim();
 }
 const cellTop = x => cellHead(x).includes("⭐");
-function cellRoutes(x){
-  const out = [], re = /•\s*`?([a-z0-9][a-z0-9.-]*\.[a-z]{2,}(?::\d+)?)`?\s*[-–—]\s*([^<•|]+)/gi;
-  let m;
-  while((m = re.exec(x))) out.push({ip: m[1], label: m[2].replace(/[`*]/g, "").trim(), note: ""});
+// Alternate routes live in the same row, in any cell, as a list separated by <br> (any bullet, "host - label" or "host: label").
+// The server's own IP is skipped. Adding or removing a line in the README is all it takes.
+const HOST = /[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+(?::\d{2,5})?/i;
+function rowRoutes(cells, own){
+  const out = [], seen = new Set([own.toLowerCase()]);
+  cells.forEach((cell, i) => {
+    if(i === 1 || (i >= 2 && i <= 4)) return;          // region + mode columns
+    let t = cell.replace(/<summary[^>]*>[\s\S]*?<\/summary>/i, "");
+    if(i === 0 && t === cell) t = cell.split(/<br/i).slice(1).join("<br>"); // no <summary>: the IP is the first line
+    for(const seg of t.split(/<br\s*\/?>|<\/?li>|<\/?p>/i)){
+      const txt = seg.replace(/<[^>]*>/g, " ").replace(/&bull;|&middot;|&nbsp;/g, " ").replace(/[`*]/g, "").replace(/^[\s•·▪◦‣\-–—]+/, "").trim();
+      if(!txt || /^alternat/i.test(txt)) continue;
+      const m = txt.match(HOST); if(!m) continue;
+      const host = m[0].toLowerCase(); if(seen.has(host)) continue;
+      seen.add(host);
+      let label = txt.slice(m.index + m[0].length).replace(/^[\s:\-–—|]+/, "").trim();
+      if(/^\(.*\)$/.test(label)) label = label.slice(1, -1).trim();
+      out.push({ip: host, label});
+    }
+  });
   return out;
 }
 function parse(md){
@@ -302,7 +322,8 @@ function parse(md){
       top: cellTop(c[0]),
       region,
       duels: val(c[2]), ffa: val(c[3]), sandbox: val(c[4]),
-      note: (c[5] || "").trim()
+      note: (c[5] || "").split(/<details|<br/i)[0].replace(/<[^>]*>/g, "").trim(),
+      routes: rowRoutes(c, cellIp(c[0]))
     });
   }
   return out;
@@ -432,42 +453,20 @@ async function copyIp(ip, btn){
 
 // ---- Server pop-up ----
 const dlg = $("#dlg"); let dlgIp = null;
-const infoUi = {};
 
-// Alternate routing: other addresses for the same server (regional proxies, lower-ping routes ...).
-// Read straight from the "Alternative Routing" list inside each server's row in README.md on GitHub.
-// Raw GitHub caches for about 5 minutes.
-const ROUTING_URL = "https://raw.githubusercontent.com/itzyongan/asia-pvp-servers/main/README.md";
-function parseRoutes(md){
-  const map = {};
-  let on = false;
-  for(const line of md.split(/\r?\n/)){
-    const h = line.match(/^#{1,6}\s+(.*)/);
-    if(h){ const t = h[1].toLowerCase(); on = t.includes("cracked") || t.includes("premium"); continue; }
-    if(!on || !line.trim().startsWith("|")) continue;
-    const c = line.trim().replace(/^\||\|$/g,"").split("|").map(x => x.trim());
-    if(c.length < 5 || /^[-:\s]+$/.test(c[0]) || /^server ip$/i.test(c[0])) continue;
-    const routes = cellRoutes(line);
-    if(routes.length) map[cellIp(c[0]).toLowerCase()] = routes;
-  }
-  return map;
+// Alternate routing: the routes come from the README rows (see rowRoutes), so the list and its routes always update together.
+// Their online status is checked each time the pop-up opens.
+const routeStatus = {};
+async function checkRoutes(s){
+  const hosts = (s.routes || []).map(r => r.ip).filter(h => !(routeStatus[h]?.t > Date.now() - 60000));
+  hosts.forEach(h => { routeStatus[h] = {...(routeStatus[h] || {}), t: Date.now(), busy: true}; });
+  if(dlgIp === s.ip) renderInfo();
+  await Promise.all(hosts.map(async h => {
+    const r = await lookup(h); // host or host:port
+    routeStatus[h] = {t: Date.now(), r};
+    if(dlgIp === s.ip) renderInfo();
+  }));
 }
-let routingP = null;
-const loadRouting = () => routingP ??= fetch(ROUTING_URL, {cache:"no-cache"})
-  .then(r => { if(!r.ok) throw new Error("http " + r.status); return r.text(); })
-  .then(parseRoutes)
-  .catch(e => { routingP = null; throw e; });
-async function loadRoutes(ip){
-  if(infoUi[ip]?.state === "done" || infoUi[ip]?.state === "loading") return;
-  infoUi[ip] = {state:"loading"};
-  try{
-    const j = await loadRouting(), list = j[ip.toLowerCase()];
-    infoUi[ip] = {state:"done", v: Array.isArray(list) ? list.filter(x => x && typeof x.ip === "string") : []};
-  }catch{ infoUi[ip] = {state:"error"}; }
-  if(dlgIp === ip) renderInfo();
-}
-
-const kvRow = (k, v) => `<div class="kr"><span>${k}</span><b>${v}</b></div>`;
 function renderInfo(){
   const s = S.find(x => x.ip === dlgIp); if(!s) return;
   const st = state.status[s.ip], h = Math.abs(hue(s.ip)) % 360;
@@ -485,11 +484,14 @@ function renderInfo(){
   $("#dlg-nmc").href = `https://namemc.com/server/${encodeURIComponent(s.ip)}`;
   $("#dlg-geo").href = `https://ipgeolocation.io/what-is-my-ip/${encodeURIComponent(s.ip)}`;
 
-  const n = infoUi[s.ip];
-  const routesHtml = !n || n.state === "loading" ? `<p class="dnote">Loading routes…</p>`
-    : n.state === "error" ? `<p class="dnote">Couldn't load routes from GitHub. Reopen this pop-up to retry.</p>`
-    : n.v.length ? `<div class="kv">${n.v.map(x => `<div class="kr"><span>${esc(x.label || "Route")}</span><b><button type="button" class="dbgbtn" data-act="copyroute" data-ip="${esc(x.ip)}" title="Copy">${esc(x.ip)}</button></b>${x.note ? `<small>${esc(x.note)}</small>` : ""}</div>`).join("")}</div>`
-    : `<p class="dnote">No alternate routes listed for this server yet.</p>`;
+  const rstat = h => { const x = routeStatus[h];
+    return !x || x.busy ? `<span class="status"><span class="dot"></span>Checking</span>`
+      : !x.r ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
+      : x.r.online ? `<span class="status"><span class="dot on"></span>Online</span>`
+      : `<span class="status"><span class="dot off"></span>Offline</span>`; };
+  const routes = s.routes || [];
+  const routesHtml = routes.length ? `<div class="kv">${routes.map(x => `<div class="kr rt"><b><button type="button" class="dbgbtn" data-act="copyroute" data-ip="${esc(x.ip)}" title="Copy">${esc(x.ip)}</button></b><span>${esc(x.label)}</span><small>${rstat(x.ip)}</small></div>`).join("")}</div>`
+    : `<p class="dnote">No alternate routes listed for this server.</p>`;
 
   const box = $("#dlg-body"), top = box.scrollTop;
   box.innerHTML = `
@@ -504,7 +506,7 @@ function openInfo(ip){
   $("#dlg-copy").textContent = "Copy IP";
   renderInfo();
   if(!dlg.open) dlg.showModal();
-  loadRoutes(ip);
+  checkRoutes(S.find(x => x.ip === ip));
 }
 $("#dlg-body").addEventListener("click", e => {
   const rb = e.target.closest("[data-act=copyroute]");
@@ -586,7 +588,7 @@ async function checkAll(){
 }
 
 // Server list: paint the saved copy straight away on repeat visits, then refresh from the README.
-const LIST_KEY = "as-list-v1";
+const LIST_KEY = "as-list-v2";
 function savedList(){
   try{ const c = JSON.parse(localStorage.getItem(LIST_KEY) || "null"); return Array.isArray(c) && c.length ? c : null; }catch{ return null; }
 }
