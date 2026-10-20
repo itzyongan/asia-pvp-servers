@@ -14,8 +14,6 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%235fa83a'/%3E%3Crect y='5' width='16' height='11' fill='%238a5a33'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preconnect" href="https://api.mcstatus.io" crossorigin>
-<link rel="dns-prefetch" href="https://api.mcsrvstat.us">
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap"></noscript>
 <style>
@@ -33,7 +31,8 @@ a{color:inherit}
 .wrap{max-width:960px;margin:0 auto;padding:0 20px}
 
 /* hero: grass strip on top, like the top layer of a world */
-.grass{height:14px;background:linear-gradient(var(--grass) 0 8px,var(--grass-dk) 8px 14px)}
+.grass{height:14px;background:
+  linear-gradient(var(--grass) 0 8px,var(--grass-dk) 8px 14px)}
 header.hero{position:relative;padding:72px 0 48px;border-bottom:4px solid #000}
 .statuslink{position:absolute;top:20px;right:20px;display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:4px 2px}
 .statuslink::before{content:"";width:8px;height:8px;background:var(--grass)}
@@ -66,7 +65,7 @@ h2{font:700 26px/1.2 var(--px);margin:40px 0 6px}
 h2:first-child{margin-top:0}
 .sub{color:var(--muted);font-size:14px;margin-bottom:16px}
 .list{display:grid;gap:8px;list-style:none;padding:0}
-.srv{display:grid;grid-template-columns:52px 1fr auto auto;gap:16px;align-items:center;cursor:pointer;
+.srv{display:grid;grid-template-columns:52px 1fr auto auto;gap:16px;align-items:center;
   background:var(--stone);border:2px solid var(--line);padding:10px 14px 10px 10px}
 .srv:hover{border-color:#fff}
 .icon{width:52px;height:52px;display:grid;place-items:center;border:2px solid #000;font:700 22px var(--px);color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.6);overflow:hidden}
@@ -82,10 +81,11 @@ h2:first-child{margin-top:0}
 .chip.n{opacity:.45;text-decoration:line-through}
 .chip.u{opacity:.6}
 .status{display:inline-flex;align-items:center;gap:6px}
-.status.stale{opacity:.5}
 .dot{width:9px;height:9px;background:var(--muted)}
+.status.stale{opacity:.5}
 .dot.on{background:var(--grass)}.dot.off{background:var(--no)}
 .copy{padding:8px 16px;font-size:14px;white-space:nowrap;min-width:92px}
+.srv{cursor:pointer}
 .empty{padding:32px;text-align:center;color:var(--muted);border:2px dashed var(--line)}
 
 /* footer sections */
@@ -109,17 +109,19 @@ body:has(dialog[open]){overflow:hidden}
 .dt h3{font:700 19px/1.25 var(--px);overflow-wrap:anywhere}
 .ds{display:flex;flex-wrap:wrap;align-items:center;gap:2px 14px;color:var(--muted);font-size:13.5px;margin-top:2px}
 .dh .x{padding:6px 12px;font-size:14px;flex:none}
-.db{padding:16px;overflow-y:auto}
+.db{padding:16px;overflow-y:auto;display:grid;gap:18px;align-content:start}
+.dnote{color:var(--muted);font-size:14px}
+.dbgbtn{background:none;border:0;padding:0;color:var(--diamond);font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
 .dsec{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font:700 15px var(--px);color:var(--gold);margin-bottom:8px}
-.dsec a,.kr b a,.df a{color:var(--diamond);text-underline-offset:3px}
-.dsec a{font:400 13px var(--body)}
 .kv{background:#111317;border:2px solid var(--line);padding:2px 14px}
 .kr{display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:2px 16px;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
 .kr:first-child{border-top:0}
 .kr>span{color:var(--muted)}
 .kr>b{font-weight:500;text-align:right;min-width:0;overflow-wrap:anywhere}
+.kr small{grid-column:1/-1;text-align:right;color:var(--muted);font-size:12.5px}
 .df{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:3px solid #000;background:var(--stone-hi);font-size:14px}
 .fl{display:flex;flex-wrap:wrap;gap:4px 16px;min-width:0}
+.df a{color:var(--diamond);text-underline-offset:3px}
 .df .copy{min-width:112px}
 @media (max-width:640px){
   dialog{margin:auto 0 0;width:100%;max-height:92%;border-width:3px 0 0}
@@ -203,94 +205,33 @@ body:has(dialog[open]){overflow:hidden}
   </div>
   <div class="db" id="dlg-body"></div>
   <div class="df">
-    <div class="fl"><a id="dlg-ext" href="#" target="_blank" rel="noopener">Server debug</a><a id="dlg-geo" href="#" target="_blank" rel="noopener">IP lookup</a></div>
+    <div class="fl"><a id="dlg-ext" href="#" target="_blank" rel="noopener">Server debug</a><a id="dlg-geo" href="#" target="_blank" rel="noopener">IP lookup</a><a id="dlg-nmc" href="#" target="_blank" rel="noopener">View on NameMC</a></div>
     <button class="btn copy" id="dlg-copy" type="button">Copy IP</button>
   </div>
 </dialog>
 
 <script>
-const $ = s => document.querySelector(s), $$ = s => document.querySelectorAll(s);
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-// A manual refresh (F5, the reload button) re-reads the README from the network and looks everything up again.
-const RELOAD = (() => { try{ return performance.getEntriesByType("navigation")[0]?.type === "reload"; }catch{ return false; } })();
-const store = { // localStorage that never throws (private mode, full disk ...)
-  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch{ return null; } },
-  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} },
-  del(k){ try{ localStorage.removeItem(k); }catch{} }
-};
-
-// ---------------------------------------------------------------------------------------------------------------
-// README.md is the single source for the list. This page only ever READS it (plain GET requests) and never writes to it.
-// Edit the README tables and commit: the site follows by itself, both on the next visit and, while the page is open,
-// within a few minutes. The copy deployed next to this page is read first; GitHub raw is only a backup because it caches
-// for about 5 minutes.
-// ---------------------------------------------------------------------------------------------------------------
-const README_URLS = ["/README.md", "https://raw.githubusercontent.com/itzyongan/asia-pvp-servers/main/README.md"];
-const SECTIONS = { // wording for the two known sections; any other heading that has a server table is shown under its own name
-  premium: ["Premium servers", "Require a paid Minecraft account."],
-  cracked: ["Cracked servers", "Also open to non-premium accounts."]
-};
-
-// A table is a list of servers when its first header cell is "Server IP" (or similar). Columns are found by their header
-// names, so they can be reordered, and optional "Uptime" and "Note" columns work too.
-function parse(md){
-  const out = [], mark = x => x.includes("✅") ? 1 : x.includes("❌") ? 0 : x.includes("❔") ? "l" : null;
-  let section = null, cols = null, skip = false;
-  for(const line of md.split(/\r?\n/)){
-    const h = line.match(/^#{1,6}\s+(.*)/);
-    if(h){
-      const title = h[1].replace(/[^\p{L}\p{N}\s&'()-]/gu, "").trim(), t = title.toLowerCase();
-      const type = t.includes("cracked") ? "cracked" : t.includes("premium") ? "premium" : t.replace(/\W+/g, "-");
-      section = {type, title: SECTIONS[type]?.[0] || title};
-      cols = null; skip = false; continue;
-    }
-    if(!line.trim().startsWith("|")){ cols = null; skip = false; continue; } // the table ended
-    const c = line.trim().replace(/^\||\|$/g, "").split("|").map(x => x.trim());
-    if(!section || /^[-:\s]+$/.test(c[0])) continue;
-    if(!cols && !skip){ // first row of a table: the header
-      const n = c.map(x => x.toLowerCase()), at = (re, d) => { const i = n.findIndex((x, k) => k > 0 && re.test(x)); return i > 0 ? i : d; };
-      if(/server|ip|address|host/.test(n[0])) cols = {region: at(/region|location|country/, 1), duels: at(/duels?/, 2), ffa: at(/ffa/, 3), sandbox: at(/sand/, 4), uptime: at(/uptime/, -1), note: at(/note|info/, -1)};
-      else skip = true;
-      continue;
-    }
-    if(skip || !cols) continue;
-    const flag = ((c[cols.region] || "").match(/[\u{1F1E6}-\u{1F1FF}]{2}/u) || [""])[0];
-    const up = cols.uptime > 0 ? parseFloat(String(c[cols.uptime]).replace(/[^\d.]/g, "")) : NaN;
-    out.push({
-      type: section.type, title: section.title,
-      ip: c[0].replace(/⭐/g, "").replace(/[`*]/g, "").trim(),
-      top: c[0].includes("⭐"),
-      region: flag ? [...flag].map(ch => String.fromCharCode(ch.codePointAt(0) - 127397)).join("") : "??",
-      duels: mark(c[cols.duels] || ""), ffa: mark(c[cols.ffa] || ""), sandbox: mark(c[cols.sandbox] || ""),
-      uptime: Number.isFinite(up) ? up : null,
-      note: cols.note > 0 ? (c[cols.note] || "") : ""
-    });
-  }
-  return out.filter(s => s.ip);
-}
-async function load(force){
-  for(const url of README_URLS){
-    try{
-      const r = await fetch(url, {cache: force ? "reload" : "no-cache"});
-      if(!r.ok) continue;
-      const data = parse(await r.text());
-      if(data.length) return data;
-    }catch{}
-  }
-  return [];
-}
-
-// ---- state ----
-const STATUS_KEY = "as-status-v8", STATUS_AGE = 60*60*1000, LIST_KEY = "as-list-v2";
+const $ = s => document.querySelector(s);
+// Live status from the last visit (up to 1 hour old) is shown dimmed for an instant first paint.
+// Every page load re-checks every server, and each row brightens once its fresh numbers arrive.
+const CACHE_KEY = "as-status-v8", MAX_AGE = 60*60*1000;
 const fresh = new Set(); // servers whose numbers were refreshed during this page load
-const saved = store.get(STATUS_KEY);
-const state = {mode:"all", q:"", region:"all", sort:"default", status: saved && Date.now() - saved.t < STATUS_AGE ? saved.d : {}};
-// Saved for the next visit's instant first paint. Pictures stay out of it (they are large); a flag tells the next visit to load them.
-const saveStatus = () => store.set(STATUS_KEY, {t: Date.now(), d: Object.fromEntries(Object.entries(state.status).filter(([, v]) => !v.unknown).map(([k, v]) => [k, {...v, icon: v.icon ? "remote" : null}]))});
-let S = [];
-if(RELOAD) store.del("as-net-v2"); // location / network info is looked up again after a refresh
+function loadCache(){
+  try{
+    const c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+    if(c && Date.now() - c.t < MAX_AGE)return c.d;
+  }catch{}
+  return {};
+}
+function saveCache(){
+  try{
+    const ok = Object.fromEntries(Object.entries(state.status).filter(([,v]) => !v.unknown));
+    localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:ok}));
+  }catch{}
+}
+const state = {mode:"all", q:"", region:"all", sort:"default", status:loadCache()};
 
-// Keep the filters in the address bar so a filtered view can be shared as a link.
+// Keep filters in the address bar so a filtered view can be shared as a link.
 function syncUrl(){
   const p = new URLSearchParams();
   if(state.mode !== "all") p.set("mode", state.mode);
@@ -302,127 +243,173 @@ function syncUrl(){
 }
 function readUrl(){
   const p = new URLSearchParams(location.search);
-  if(["duels", "ffa", "sandbox"].includes(p.get("mode"))) state.mode = p.get("mode");
-  if(S.some(s => s.region === p.get("region"))) state.region = p.get("region");
+  if(["duels","ffa","sandbox"].includes(p.get("mode"))) state.mode = p.get("mode");
+  if(p.get("region") && S.some(s => s.region === p.get("region"))) state.region = p.get("region");
   if(p.get("sort") === "players") state.sort = "players";
   state.q = (p.get("q") || "").slice(0, 60);
-  $$(".tab").forEach(t => t.setAttribute("aria-pressed", t.dataset.mode === state.mode));
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-pressed", t.dataset.mode === state.mode));
   $("#region").value = state.region; $("#sort").value = state.sort; $("#q").value = state.q;
 }
+let S = [];
 
-// ---- small helpers ----
+// The server list is read straight from README.md, so there is no sync step to break.
+// Edit the README tables and commit: the site updates on the next deploy.
+// The copy deployed next to this page is always current once Vercel finishes deploying.
+// GitHub raw is only a backup: it caches for 5 minutes, so it can be stale.
+const README_URLS = [
+  "/README.md",
+  "https://raw.githubusercontent.com/itzyongan/asia-pvp-servers/main/README.md"
+];
+
+// PARSE-START
+// A Server IP cell may hold an HTML <details> block (IP in <summary>, alternate routes below it).
+// cellIp() returns just the hostname; cellTop() tells whether it carries the star.
+function cellHead(x){
+  const m = x.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
+  return m ? m[1] : x.split(/<details|<br/i)[0];
+}
+function cellIp(x){
+  const t = cellHead(x).replace(/<[^>]*>/g, " ").replace(/⭐/g, " ").replace(/[`*]/g, "");
+  const m = t.match(/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+/i);
+  return m ? m[0] : t.trim();
+}
+const cellTop = x => cellHead(x).includes("⭐");
+function cellRoutes(x){
+  const out = [], re = /•\s*`?([a-z0-9][a-z0-9.-]*\.[a-z]{2,}(?::\d+)?)`?\s*[-–—]\s*([^<•|]+)/gi;
+  let m;
+  while((m = re.exec(x))) out.push({ip: m[1], label: m[2].replace(/[`*]/g, "").trim(), note: ""});
+  return out;
+}
+function parse(md){
+  const out = [];
+  let type = null;
+  const val = x => x.includes("✅") ? 1 : x.includes("❌") ? 0 : x.includes("❔") ? "l" : null;
+  for(const line of md.split(/\r?\n/)){
+    const h = line.match(/^#{1,6}\s+(.*)/);
+    if(h){
+      const t = h[1].toLowerCase();
+      type = t.includes("cracked") ? "cracked" : t.includes("premium") ? "premium" : null;
+      continue;
+    }
+    if(!type || !line.trim().startsWith("|")) continue;
+    const c = line.trim().replace(/^\||\|$/g,"").split("|").map(x=>x.trim());
+    if(c.length < 5 || /^[-:\s]+$/.test(c[0]) || /^server ip$/i.test(c[0])) continue;
+    const flag = (c[1].match(/[\u{1F1E6}-\u{1F1FF}]{2}/u) || [""])[0];
+    const region = flag ? [...flag].map(ch => String.fromCharCode(ch.codePointAt(0) - 127397)).join("") : "??";
+    out.push({
+      type,
+      ip: cellIp(c[0]),
+      top: cellTop(c[0]),
+      region,
+      duels: val(c[2]), ffa: val(c[3]), sandbox: val(c[4]),
+      note: (c[5] || "").trim()
+    });
+  }
+  return out;
+}
+// PARSE-END
+
+async function load(){
+  for(const url of README_URLS){
+    try{
+      const r = await fetch(url, {cache:"no-cache"});
+      if(!r.ok) continue;
+      const data = parse(await r.text());
+      if(data.length) return data;
+    }catch{}
+  }
+  return [];
+}
+
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const flagOf = code => code.length === 2 && code !== "??" ? [...code].map(c => String.fromCodePoint(c.charCodeAt(0) + 127397)).join("") : "🌏";
+const flagOf = code => code.length===2 && code!=="??" ? [...code].map(c=>String.fromCodePoint(c.charCodeAt(0)+127397)).join("") : "🌏";
 const regionNames = (() => { try{ return new Intl.DisplayNames(["en"], {type:"region"}); }catch{ return null; } })();
-const nameOf = code => { try{ return regionNames.of(code); }catch{ return code; } };
-const hue = ip => [...ip].reduce((h, c) => h * 31 + c.charCodeAt(0) | 0, 7);
-const letterOf = ip => ip.replace(/^(as|play)\./, "")[0].toUpperCase();
-const num = v => Number.isFinite(v) ? v : 0;
-const isIcon = v => typeof v === "string" && v.startsWith("data:image/");
-const chip = (label, v) => {
-  const c = v === 1 ? "y" : v === "l" ? "l" : v === 0 ? "n" : "u";
-  const t = v === 1 ? "available" : v === "l" ? "limited" : v === 0 ? "unavailable" : "unverified";
-  return `<span class="chip ${c}" title="${label}: ${t}">${label}${v === "l" ? " (limited)" : ""}${v === null ? " ?" : ""}</span>`;
+const nameCache = {};
+const nameOf = code => nameCache[code] ??= (() => { try{ return regionNames.of(code); }catch{ return code; } })();
+const hue = ip => [...ip].reduce((h,c)=>h*31+c.charCodeAt(0)|0,7);
+const chip = (label,v) => {
+  const c = v===1?"y":v==="l"?"l":v===0?"n":"u";
+  const t = v===1?"available":v==="l"?"limited":v===0?"unavailable":"unverified";
+  return `<span class="chip ${c}" title="${label}: ${t}">${label}${v==="l"?" (limited)":""}${v===null?" ?":""}</span>`;
 };
-async function getJson(url, ms){
-  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), ms);
-  try{
-    const r = await fetch(url, {signal: ctl.signal});
-    if(!r.ok) throw new Error("http " + r.status);
-    return await r.json();
-  } finally { clearTimeout(timer); }
-}
 
-// A server's icon comes straight from its status check (a data address). On the next visit, when that isn't kept, it is loaded
-// from the two public icon services in turn, and a letter tile is the last resort. Servers whose check saw no icon get the
-// letter tile right away, so the services' stand-in picture is never shown.
-function iconSrcs(ip, icon){
-  if(isIcon(icon)) return [icon];
-  const q = encodeURIComponent(ip);
-  return [`https://api.mcstatus.io/v2/icon/${q}`, `https://api.mcsrvstat.us/icon/${q}`];
+// The server's own icon comes with its status lookup (a data: image); without one the letter tile is shown.
+function iconImg(icon, letter, lazy){
+  return `<img src="${esc(icon)}" alt="" width="64" height="64"${lazy ? ' loading="lazy"' : ""} decoding="async" data-l="${esc(letter)}" onerror="this.replaceWith(this.dataset.l)">`;
 }
-function iconNext(img){
-  const rest = (img.dataset.q || "").split(" ").filter(Boolean), next = rest.shift();
-  if(next){ img.dataset.q = rest.join(" "); img.src = next; } else img.replaceWith(img.dataset.l);
-}
-function iconHtml(ip, lazy){
-  const icon = state.status[ip]?.icon;
-  if(!icon) return esc(letterOf(ip));
-  const [first, ...rest] = iconSrcs(ip, icon);
-  return `<img src="${esc(first)}" alt="" width="64" height="64"${lazy ? ' loading="lazy"' : ""} decoding="async" data-l="${esc(letterOf(ip))}" data-q="${esc(rest.join(" "))}" onerror="iconNext(this)">`;
-}
-function statusHtml(ip, long){
-  const st = state.status[ip];
-  if(st === undefined) return `<span class="status"><span class="dot"></span>Checking</span>`;
-  if(st.unknown) return `<span class="status"><span class="dot"></span>Status unavailable</span>`;
-  const stale = fresh.has(ip) ? "" : " stale"; // numbers from the last visit are dimmed until fresh ones arrive
-  return st.online
-    ? `<span class="status${stale}"><span class="dot on"></span>${long ? `Online · ${st.players} player${st.players === 1 ? "" : "s"}` : `${st.players} online`}</span>`
-    : `<span class="status${stale}"><span class="dot off"></span>Offline</span>`;
-}
-
-// ---- server list ----
 const flash = {}; // per-server button label ("Copied!") kept in data so a row redraw can't wipe it
 function rowInner(s){
+  const h = Math.abs(hue(s.ip))%360, st = state.status[s.ip];
+  let status = st===undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
+    : st.unknown ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
+    : st.online ? `<span class="status"><span class="dot on"></span>${st.players} online</span>`
+    : `<span class="status"><span class="dot off"></span>Offline</span>`;
   const fl = flash[s.ip], label = fl && fl.until > Date.now() ? fl.text : "Copy IP";
+  const statusHtml = st && !st.unknown && !fresh.has(s.ip) ? status.replace('class="status"','class="status stale"') : status;
   return `
-    <div class="icon" style="background:hsl(${Math.abs(hue(s.ip)) % 360} 35% 32%)" aria-hidden="true">${iconHtml(s.ip, true)}</div>
+    <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? iconImg(st.icon, s.ip.replace(/^(as|play)\./,"")[0].toUpperCase(), true) : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
     <div>
-      <button class="ip" data-ip="${esc(s.ip)}" aria-label="Show info for ${esc(s.ip)}">${s.top ? '<span class="star" title="Top pick">★</span>' : ""}${esc(s.ip)}</button>
-      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${statusHtml(s.ip)}${s.note ? `<span>${esc(s.note)}</span>` : ""}</div>
+      <button class="ip" data-ip="${esc(s.ip)}" aria-label="Show info for ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
+      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${statusHtml}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
     </div>
-    <div class="modes">${chip("Duels", s.duels)}${chip("FFA", s.ffa)}${chip("Sandbox", s.sandbox)}</div>
-    <button class="btn copy" data-ip="${esc(s.ip)}">${label}</button>`;
+    <div class="modes">${chip("Duels",s.duels)}${chip("FFA",s.ffa)}${chip("Sandbox",s.sandbox)}</div>
+    <button class="btn copy" data-ip="${esc(s.ip)}">${label}</button>
+  `;
 }
 const row = s => `<li class="srv" data-ip="${esc(s.ip)}">${rowInner(s)}</li>`;
 
-// Default order: top picks first, otherwise README order. "Most players" ignores stars: most online first, offline or
-// unknown last, inside each section. Ties keep README order because sorting is stable.
+// Default order: top picks first, otherwise README order.
 const byTop = (a, b) => b.top - a.top;
-const byPlayers = (a, b) => (state.status[b.ip]?.online ? state.status[b.ip].players : -1) - (state.status[a.ip]?.online ? state.status[a.ip].players : -1);
-
-function keepAnchor(fn){ // redraw without the list jumping under the reader
-  const barH = $(".bar")?.offsetHeight || 0;
-  const a = [...$$(".srv")].find(r => r.getBoundingClientRect().bottom > barH);
+// Players order ignores stars: most online first, offline/unknown last, inside each section.
+// Ties keep README order because sorting is stable.
+function byPlayers(a, b){
+  const pa = state.status[a.ip], pb = state.status[b.ip];
+  return (pb?.online ? pb.players : -1) - (pa?.online ? pa.players : -1);
+}
+function keepAnchor(fn){
+  const barH = document.querySelector(".bar")?.offsetHeight || 0;
+  const a = [...document.querySelectorAll(".srv")].find(r => r.getBoundingClientRect().bottom > barH);
   const ip = a?.dataset.ip, top = a?.getBoundingClientRect().top;
   fn();
   if(!ip) return;
-  const n = $(`.srv[data-ip="${CSS.escape(ip)}"]`);
+  const n = document.querySelector(`.srv[data-ip="${CSS.escape(ip)}"]`);
   if(n) scrollBy({top: n.getBoundingClientRect().top - top, behavior: "instant"});
 }
 function render(){
   syncUrl();
   const q = state.q.trim().toLowerCase();
   const f = S.filter(s =>
-    (state.mode === "all" || s[state.mode] === 1 || s[state.mode] === "l") &&
-    (state.region === "all" || s.region === state.region) &&
+    (state.mode==="all" || s[state.mode]===1 || s[state.mode]==="l") &&
+    (state.region==="all" || s.region===state.region) &&
     (!q || s.ip.toLowerCase().includes(q)));
-  const sections = [...new Map(S.map(s => [s.type, s])).values()]; // in README order
-  $("#out").innerHTML = sections.map(g => {
-    const items = f.filter(s => s.type === g.type).sort(state.sort === "players" ? byPlayers : byTop);
-    const sub = SECTIONS[g.type]?.[1];
-    return items.length ? `<h2>${esc(g.title)}</h2>${sub ? `<p class="sub">${sub}</p>` : ""}<ul class="list">${items.map(row).join("")}</ul>` : "";
-  }).join("") || `<div class="empty">No servers match your filters. Clear the search or pick another mode.</div>`;
-}
-function setup(){
-  const regions = [...new Set(S.map(s => s.region))];
-  $("#region").innerHTML = '<option value="all">All regions</option>' + regions.map(r => `<option value="${r}">${flagOf(r)} ${esc(nameOf(r))}</option>`).join("");
-  $("#stats").innerHTML = `<span><b>${S.length}</b> servers</span><span><b>${S.filter(s => s.top).length}</b> top picks</span><span><b>${regions.length}</b> regions</span><span id="online"></span>`;
+  const none = `<div class="empty">No servers match your filters. Clear the search or pick another mode.</div>`;
+  const group = (type,title,sub) => {
+    const items = f.filter(s=>s.type===type).sort(state.sort === "players" ? byPlayers : byTop);
+    return items.length ? `<h2>${title}</h2><p class="sub">${sub}</p><ul class="list">${items.map(row).join("")}</ul>` : "";
+  };
+  $("#out").innerHTML = (group("premium","Premium servers","Require a paid Minecraft account.") +
+    group("cracked","Cracked servers","Also open to non-premium accounts.")) || none;
 }
 
-// ---- events ----
+function setup(){
+  const regions = [...new Set(S.map(s=>s.region))];
+  $("#region").innerHTML = '<option value="all">All regions</option>' +
+    regions.map(r=>`<option value="${r}">${flagOf(r)} ${esc(nameOf(r))}</option>`).join("");
+  $("#stats").innerHTML = `<span><b>${S.length}</b> servers</span><span><b>${S.filter(s=>s.top).length}</b> top picks</span><span><b>${regions.length}</b> regions</span><span id="online"></span>`;
+}
+
+// events
 $("#tabs").addEventListener("click", e => {
   const b = e.target.closest(".tab"); if(!b) return;
   state.mode = b.dataset.mode;
-  $$(".tab").forEach(t => t.setAttribute("aria-pressed", t === b));
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-pressed", t===b));
   render();
 });
 let qTimer;
-$("#q").addEventListener("input", e => { clearTimeout(qTimer); const v = e.target.value; qTimer = setTimeout(() => { state.q = v; render(); }, 120); });
-$("#region").addEventListener("change", e => { state.region = e.target.value; render(); });
-$("#sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
-$("#browse").addEventListener("click", e => { e.preventDefault(); $("#servers").scrollIntoView({block:"start"}); });
-
+$("#q").addEventListener("input", e=>{ clearTimeout(qTimer); const v = e.target.value; qTimer = setTimeout(() => { state.q = v; render(); }, 120); });
+$("#region").addEventListener("change", e=>{state.region=e.target.value;render()});
+$("#sort").addEventListener("change", e=>{state.sort=e.target.value;render()});
+// Click anywhere on a server box to copy its IP.
 async function copyText(text){
   try{ await navigator.clipboard.writeText(text); return true; }catch{}
   try{ // fallback for older browsers
@@ -435,104 +422,101 @@ async function copyText(text){
 async function copyIp(ip, btn){
   const ok = await copyText(ip);
   flash[ip] = {text: ok ? "Copied!" : "Couldn't copy", until: Date.now() + 1400};
-  const set = t => { const b = btn.isConnected ? btn : $(`.srv[data-ip="${CSS.escape(ip)}"] .copy`); if(b) b.textContent = t; };
+  const set = t => {
+    const b = btn.isConnected ? btn : document.querySelector(`.srv[data-ip="${CSS.escape(ip)}"] .copy`);
+    if(b) b.textContent = t;
+  };
   set(flash[ip].text);
   setTimeout(() => { if(Date.now() >= flash[ip].until) set("Copy IP"); }, 1450);
 }
 
-// ---- server pop-up ----
+// ---- Server pop-up ----
 const dlg = $("#dlg"); let dlgIp = null;
-const infoUi = {}, targetP = {};
+const infoUi = {};
 
-// Your ipgeolocation.io API key (https://app.ipgeolocation.io/signup). With no key the pop-up falls back to a free lookup
-// with fewer details. Note: the key is visible to anyone who views the page source.
-const IPGEO_KEY = "";
-
-// Resolved address of the server. The page's own status checks already know it, so no extra request is needed.
-function target(ip){
-  const st = state.status[ip];
-  if(st?.addr) return Promise.resolve({addr: st.addr});
-  return targetP[ip] ??= getJson(`https://api.mcstatus.io/v2/status/java/${encodeURIComponent(ip)}?query=false&timeout=4`, 7000)
-    .then(d => ({addr: d.ip_address || null}))
-    .catch(e => { delete targetP[ip]; throw e; });
+// Alternate routing: other addresses for the same server (regional proxies, lower-ping routes ...).
+// Read straight from the "Alternative Routing" list inside each server's row in README.md on GitHub.
+// Raw GitHub caches for about 5 minutes.
+const ROUTING_URL = "https://raw.githubusercontent.com/itzyongan/asia-pvp-servers/main/README.md";
+function parseRoutes(md){
+  const map = {};
+  let on = false;
+  for(const line of md.split(/\r?\n/)){
+    const h = line.match(/^#{1,6}\s+(.*)/);
+    if(h){ const t = h[1].toLowerCase(); on = t.includes("cracked") || t.includes("premium"); continue; }
+    if(!on || !line.trim().startsWith("|")) continue;
+    const c = line.trim().replace(/^\||\|$/g,"").split("|").map(x => x.trim());
+    if(c.length < 5 || /^[-:\s]+$/.test(c[0]) || /^server ip$/i.test(c[0])) continue;
+    const routes = cellRoutes(line);
+    if(routes.length) map[cellIp(c[0]).toLowerCase()] = routes;
+  }
+  return map;
 }
-
-// Network info for the server's IP address, cached for 30 days in this browser so each IP is looked up once.
-const NET_KEY = "as-net-v2", NET_AGE = 30*24*60*60*1000;
-async function fromIpgeolocation(addr){
-  const d = await getJson(`https://api.ipgeolocation.io/v3/ipgeo?apiKey=${encodeURIComponent(IPGEO_KEY)}&ip=${encodeURIComponent(addr)}`, 8000);
-  const l = d.location || {};
-  if(!l.country_code2) throw new Error("no data");
-  return {src: "ig", city: l.city || "", region: l.state_prov || "", cc: l.country_code2,
-    asn: d.asn?.as_number ? String(d.asn.as_number).replace(/^AS/i, "") : "", asnOrg: d.asn?.organization || "",
-    tz: d.time_zone?.name || "", company: d.company?.name || "", net: d.network?.route || ""};
-}
-async function fromFallback(addr){
-  const d = await getJson(`https://ipwho.is/${encodeURIComponent(addr)}`, 6000);
-  if(d.success === false || !d.country_code) throw new Error("no data");
-  return {src: "iw", city: d.city || "", region: d.region || "", cc: d.country_code,
-    asn: d.connection?.asn ? String(d.connection.asn) : "", asnOrg: d.connection?.isp || d.connection?.org || "",
-    tz: d.timezone?.id || "", company: "", net: ""};
-}
-// The announced network prefix. ipgeolocation.io only includes it on paid plans, so RIPEstat fills the gap.
-async function fromRipe(addr){
-  const d = await getJson(`https://stat.ripe.net/data/prefix-overview/data.json?resource=${encodeURIComponent(addr)}&sourceapp=asia-pvp-servers`, 6000);
-  const r = d?.data?.resource;
-  return typeof r === "string" && r.includes("/") && d.data.announced !== false ? r : "";
-}
-async function loadNet(ip){
-  if(infoUi[ip]?.state === "done" || infoUi[ip]?.state === "loading") return; // a failure is retried the next time the pop-up opens
-  const want = IPGEO_KEY ? "ig" : "iw", c = (store.get(NET_KEY) || {})[ip];
-  if(c && c.v?.src === want && Date.now() - c.t < NET_AGE){ infoUi[ip] = {state:"done", v:c.v}; return; }
+let routingP = null;
+const loadRouting = () => routingP ??= fetch(ROUTING_URL, {cache:"no-cache"})
+  .then(r => { if(!r.ok) throw new Error("http " + r.status); return r.text(); })
+  .then(parseRoutes)
+  .catch(e => { routingP = null; throw e; });
+async function loadRoutes(ip){
+  if(infoUi[ip]?.state === "done" || infoUi[ip]?.state === "loading") return;
   infoUi[ip] = {state:"loading"};
   try{
-    const {addr} = await target(ip); if(!addr) throw new Error("no address");
-    const v = IPGEO_KEY ? await fromIpgeolocation(addr).catch(() => fromFallback(addr)) : await fromFallback(addr);
-    if(!v.net) v.net = await fromRipe(addr).catch(() => "");
-    infoUi[ip] = {state:"done", v};
-    store.set(NET_KEY, {...store.get(NET_KEY), [ip]: {t: Date.now(), v}});
+    const j = await loadRouting(), list = j[ip.toLowerCase()];
+    infoUi[ip] = {state:"done", v: Array.isArray(list) ? list.filter(x => x && typeof x.ip === "string") : []};
   }catch{ infoUi[ip] = {state:"error"}; }
   if(dlgIp === ip) renderInfo();
 }
 
 const kvRow = (k, v) => `<div class="kr"><span>${k}</span><b>${v}</b></div>`;
-const extLink = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${text}</a>`;
 function renderInfo(){
   const s = S.find(x => x.ip === dlgIp); if(!s) return;
-  const st = state.status[s.ip], known = st && !st.unknown;
+  const st = state.status[s.ip], h = Math.abs(hue(s.ip)) % 360;
   const ic = $("#dlg-icon");
-  ic.style.background = `hsl(${Math.abs(hue(s.ip)) % 360} 35% 32%)`;
-  ic.innerHTML = iconHtml(s.ip, false);
+  ic.style.background = `hsl(${h} 35% 32%)`;
+  ic.innerHTML = st?.icon ? iconImg(st.icon, s.ip.replace(/^(as|play)\./, "")[0].toUpperCase(), false) : esc(s.ip.replace(/^(as|play)\./, "")[0].toUpperCase());
+  const stale = st && !st.unknown && !fresh.has(s.ip) ? " stale" : "";
+  const status = st === undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
+    : st.unknown ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
+    : st.online ? `<span class="status${stale}"><span class="dot on"></span>Online · ${st.players} player${st.players === 1 ? "" : "s"}</span>`
+    : `<span class="status${stale}"><span class="dot off"></span>Offline</span>`;
   $("#dlg-title").textContent = s.ip;
-  $("#dlg-sub").innerHTML = `<span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${statusHtml(s.ip, true)}`;
+  $("#dlg-sub").innerHTML = `<span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${status}`;
   $("#dlg-ext").href = `https://mcsrvstat.us/server/${encodeURIComponent(s.ip)}`;
+  $("#dlg-nmc").href = `https://namemc.com/server/${encodeURIComponent(s.ip)}`;
   $("#dlg-geo").href = `https://ipgeolocation.io/what-is-my-ip/${encodeURIComponent(s.ip)}`;
 
-  const n = infoUi[s.ip], v = n?.state === "done" ? n.v : null, wait = !n || n.state === "loading";
-  const rows = [
-    kvRow("Version", known && st.version ? esc(st.version) : "–"),
-    ...(typeof s.uptime === "number" ? [kvRow("Uptime", `${s.uptime.toFixed(1)}%`)] : []),
-    kvRow("Location", v ? `${flagOf(v.cc)} ${esc([v.city, v.region, v.cc].filter(Boolean).join(", "))}` : wait ? "Locating…" : "Unavailable")
-  ];
-  if(v){
-    if(v.asn) rows.push(kvRow("ASN", `${extLink(`https://ipgeolocation.io/browse/asn/AS${esc(v.asn)}`, "AS" + esc(v.asn))}${v.asnOrg ? ` — ${esc(v.asnOrg)}` : ""}`));
-    if(v.net) rows.push(kvRow("Network", v.net.includes(":") ? esc(v.net) : extLink(`https://ipgeolocation.io/browse/ipv4/${esc(v.net)}`, esc(v.net))));
-    if(v.tz) rows.push(kvRow("Timezone", esc(v.tz)));
-    if(v.company) rows.push(kvRow("Company", esc(v.company)));
-  }else if(wait) rows.push(kvRow("ASN", "…"), kvRow("Network", "…"), kvRow("Timezone", "…"));
+  const n = infoUi[s.ip];
+  const routesHtml = !n || n.state === "loading" ? `<p class="dnote">Loading routes…</p>`
+    : n.state === "error" ? `<p class="dnote">Couldn't load routes from GitHub. Reopen this pop-up to retry.</p>`
+    : n.v.length ? `<div class="kv">${n.v.map(x => `<div class="kr"><span>${esc(x.label || "Route")}</span><b><button type="button" class="dbgbtn" data-act="copyroute" data-ip="${esc(x.ip)}" title="Copy">${esc(x.ip)}</button></b>${x.note ? `<small>${esc(x.note)}</small>` : ""}</div>`).join("")}</div>`
+    : `<p class="dnote">No alternate routes listed for this server yet.</p>`;
 
   const box = $("#dlg-body"), top = box.scrollTop;
-  box.innerHTML = `<div class="dsec"><span>Information</span>${extLink(`https://namemc.com/server/${encodeURIComponent(s.ip)}`, "View on NameMC")}</div><div class="kv">${rows.join("")}</div>`;
+  box.innerHTML = `
+    <div><div class="dsec"><span>Alternate Routing</span></div>
+      ${routesHtml}</div>`;
   box.scrollTop = top;
 }
+
 function openInfo(ip){
   if(!S.some(x => x.ip === ip)) return;
   dlgIp = ip;
   $("#dlg-copy").textContent = "Copy IP";
   renderInfo();
   if(!dlg.open) dlg.showModal();
-  loadNet(ip);
+  loadRoutes(ip);
 }
+$("#dlg-body").addEventListener("click", e => {
+  const rb = e.target.closest("[data-act=copyroute]");
+  if(rb){
+    const r = rb.dataset.ip;
+    copyText(r).then(ok => {
+      rb.textContent = ok ? "Copied!" : "Couldn't copy";
+      setTimeout(() => { rb.textContent = r; }, 1200);
+    });
+    return;
+  }
+});
 $("#dlg-close").addEventListener("click", () => dlg.close());
 $("#dlg-copy").addEventListener("click", e => dlgIp && copyIp(dlgIp, e.currentTarget));
 dlg.addEventListener("click", e => { if(e.target === dlg) dlg.close(); }); // click on the backdrop
@@ -548,81 +532,87 @@ $("#out").addEventListener("click", e => {
   openInfo(ip);
 });
 
-// ---- live status ----
-// Each server is asked from here: mcstatus.io first, and mcsrvstat.us as a second opinion before a server is called offline.
+// Live status. Primary source: mcstatus.io (fast). If it fails, or says "offline", mcsrvstat.us double-checks.
+const num = v => Number.isFinite(v) ? v : 0;
+const dataIcon = i => (typeof i === "string" && i.startsWith("data:image/")) ? i : null;
+async function getJson(url, ms){
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), ms);
+  try{
+    const r = await fetch(url, {signal:ctl.signal});
+    if(!r.ok) throw new Error("http " + r.status);
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
+async function lookupMcstatus(ip){
+  const d = await getJson(`https://api.mcstatus.io/v2/status/java/${encodeURIComponent(ip)}?query=false&timeout=4`, 7000);
+  return {online: !!d.online, players: num(d.players?.online), icon: dataIcon(d.icon)};
+}
+async function lookupMcsrvstat(ip){
+  const d = await getJson(`https://api.mcsrvstat.us/3/${encodeURIComponent(ip)}`, 9000);
+  return {online: !!d.online, players: num(d.players?.online), icon: dataIcon(d.icon)};
+}
 async function lookup(ip){
-  const q = encodeURIComponent(ip);
   let first = null;
-  try{
-    const d = await getJson(`https://api.mcstatus.io/v2/status/java/${q}?query=false&timeout=3`, 5000), v = d.version;
-    first = {online: !!d.online, players: num(d.players?.online), icon: isIcon(d.icon) ? d.icon : null,
-      version: v?.name_clean ?? (typeof v?.name === "string" ? v.name : null),
-      addr: d.ip_address || null, port: d.srv_record?.port || d.port || null};
-    if(first.online) return first;
-  }catch{}
-  try{
-    const d = await getJson(`https://api.mcsrvstat.us/3/${q}`, 6000);
-    if(d.online || !first) return {online: !!d.online, players: num(d.players?.online), icon: isIcon(d.icon) ? d.icon : null, version: typeof d.version === "string" ? d.version : null};
-  }catch{}
+  try{ first = await lookupMcstatus(ip); if(first.online) return first; }catch{}
+  try{ const second = await lookupMcsrvstat(ip); if(second.online || !first) return second; }catch{}
   return first; // null means both services failed
 }
-async function checkServer(s){
+async function ping(s){
   const r = await lookup(s.ip);
-  if(r){ state.status[s.ip] = {...r, version: r.version ? String(r.version).slice(0, 40) : null}; fresh.add(s.ip); }
-  else if(!state.status[s.ip] || state.status[s.ip].unknown) state.status[s.ip] = {unknown: true};
-  // Redraw from the CURRENT list: if a README refresh replaced it while this lookup was running, `s` may be outdated.
-  const cur = S.find(x => x.ip === s.ip), li = $(`.srv[data-ip="${CSS.escape(s.ip)}"]`);
+  if(r) fresh.add(s.ip);
+  if(r) state.status[s.ip] = r;
+  else if(!state.status[s.ip] || state.status[s.ip].unknown) state.status[s.ip] = {unknown:true};
+  // Redraw from the CURRENT list: if the README refresh replaced the saved list while this lookup
+  // was running, `s` is an outdated copy (e.g. missing a newly added star).
+  const cur = S.find(x => x.ip === s.ip);
+  const li = document.querySelector(`.srv[data-ip="${CSS.escape(s.ip)}"]`);
   if(li && cur) li.innerHTML = rowInner(cur);
   if(dlgIp === s.ip) renderInfo();
-  showOnline();
-}
-async function runPool(list, n){
-  const queue = [...list];
-  await Promise.all(Array.from({length: n}, async () => { while(queue.length) await checkServer(queue.shift()); }));
 }
 function showOnline(){
   const on = S.filter(s => state.status[s.ip]?.online);
-  if(on.length) $("#online").innerHTML = `<b>${on.reduce((n, s) => n + state.status[s.ip].players, 0)}</b> players online now`;
+  if(on.length) $("#online").innerHTML = `<b>${on.reduce((n,s) => n + state.status[s.ip].players, 0)}</b> players online now`;
+}
+async function runPool(list, n){
+  const queue = [...list];
+  await Promise.all(Array.from({length:n}, async () => { while(queue.length) await ping(queue.shift()); }));
 }
 async function checkAll(){
-  const order = [...$$(".srv")].map(r => r.dataset.ip), pos = ip => { const i = order.indexOf(ip); return i < 0 ? 1e9 : i; };
-  const todo = S.filter(s => !fresh.has(s.ip)).sort((a, b) => pos(a.ip) - pos(b.ip)); // top of the page first
-  await runPool(todo, 8);
+  await runPool(S, 6); // every server is checked directly; each row updates as its answer arrives
   const failed = S.filter(s => !fresh.has(s.ip));
-  if(failed.length){ await sleep(2500); await runPool(failed, 2); } // one gentle retry
-  saveStatus(); showOnline();
+  if(failed.length){ await new Promise(r => setTimeout(r, 2500)); await runPool(failed, 2); } // one gentle retry
+  saveCache(); showOnline();
   if(state.sort === "players") keepAnchor(render); // re-order once the fresh counts are in
 }
 
-// ---- start, and follow README changes ----
-let checks = Promise.resolve(), listJson = "", lastSync = Date.now();
-function applyList(data){
-  const first = !S.length;
+// Server list: paint the saved copy straight away on repeat visits, then refresh from the README.
+const LIST_KEY = "as-list-v1";
+function savedList(){
+  try{ const c = JSON.parse(localStorage.getItem(LIST_KEY) || "null"); return Array.isArray(c) && c.length ? c : null; }catch{ return null; }
+}
+let checks = Promise.resolve();
+function applyList(data, first){
   S = data; setup();
   if(first) readUrl();
-  else if(!S.some(s => s.region === state.region)){ state.region = "all"; $("#region").value = "all"; }
+  else { if(!S.some(s => s.region === state.region)) state.region = "all"; $("#region").value = state.region; }
   if(first) render(); else keepAnchor(render);
   showOnline();
   checks = checks.then(checkAll);
 }
-async function syncList(force){ // read the README again; redraw only when it really changed
-  lastSync = Date.now();
-  const data = await load(force);
+$("#browse").addEventListener("click", e => { e.preventDefault(); $("#servers").scrollIntoView({block:"start"}); });
+const saved = savedList();
+if(saved) applyList(saved, true);
+else $("#out").innerHTML = '<div class="empty">Loading servers…</div>';
+load().then(data => {
   if(!data.length){
-    if(!S.length) $("#out").innerHTML = '<div class="empty">Could not load the server list. <a href="https://github.com/itzyongan/asia-pvp-servers">View it on GitHub</a>.</div>';
+    if(!saved) $("#out").innerHTML = '<div class="empty">Could not load the server list. <a href="https://github.com/itzyongan/asia-pvp-servers">View it on GitHub</a>.</div>';
     return;
   }
-  const json = JSON.stringify(data);
-  if(json === listJson) return;
-  listJson = json; store.set(LIST_KEY, data);
-  applyList(data);
-}
-const cachedList = store.get(LIST_KEY); // repeat visitors see the last list at once while the README is re-read
-if(Array.isArray(cachedList) && cachedList.length){ listJson = JSON.stringify(cachedList); applyList(cachedList); }
-else $("#out").innerHTML = '<div class="empty">Loading servers…</div>';
-syncList(RELOAD);
-setInterval(syncList, 3 * 60 * 1000); // an open tab picks up README edits by itself
-document.addEventListener("visibilitychange", () => { if(!document.hidden && Date.now() - lastSync > 60 * 1000) syncList(); });
+  const freshJson = JSON.stringify(data);
+  try{ localStorage.setItem(LIST_KEY, freshJson); }catch{}
+  if(!saved) applyList(data, true);
+  else if(freshJson !== JSON.stringify(saved)) applyList(data, false);
+});
 </script>
 </body>
 </html>
