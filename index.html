@@ -112,10 +112,6 @@ body:has(dialog[open]){overflow:hidden}
 .db{padding:16px;overflow-y:auto;display:grid;gap:18px;align-content:start}
 .dnote{color:var(--muted);font-size:14px}
 .dbgbtn{background:none;border:0;padding:0;color:var(--diamond);font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
-#dlg-title{cursor:pointer}
-.cp{width:.85em;height:.85em;margin-left:8px;vertical-align:-.1em;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;opacity:.65}
-#dlg-title:hover .cp,.dbgbtn:hover .cp{opacity:1}
-#dlg-title:hover{color:var(--diamond)}
 .dsec{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font:700 15px var(--px);color:var(--gold);margin-bottom:8px}
 .kv{background:#111317;border:2px solid var(--line);padding:2px 14px}
 .kr{display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:2px 16px;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px}
@@ -208,7 +204,7 @@ body:has(dialog[open]){overflow:hidden}
 <dialog id="dlg" aria-labelledby="dlg-title">
   <div class="dh">
     <div class="icon" id="dlg-icon" aria-hidden="true"></div>
-    <div class="dt"><h3 id="dlg-title" role="button" tabindex="0" title="Click to copy"></h3><div class="ds" id="dlg-sub"></div></div>
+    <div class="dt"><h3 id="dlg-title"></h3><div class="ds" id="dlg-sub"></div></div>
     <button class="btn alt x" id="dlg-close" type="button" aria-label="Close">✕</button>
   </div>
   <div class="db" id="dlg-body"></div>
@@ -460,7 +456,6 @@ const dlg = $("#dlg"); let dlgIp = null;
 
 // Alternate routing: the routes come from the README rows (see rowRoutes), so the list and its routes always update together.
 // Their online status is checked each time the pop-up opens.
-const COPY_ICON = '<svg class="cp" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>';
 const routeStatus = {};
 async function checkRoutes(s){
   const hosts = (s.routes || []).map(r => r.ip).filter(h => !(routeStatus[h]?.t > Date.now() - 60000));
@@ -483,7 +478,7 @@ function renderInfo(){
     : st.unknown ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
     : st.online ? `<span class="status${stale}"><span class="dot on"></span>Online · ${st.players} player${st.players === 1 ? "" : "s"}</span>`
     : `<span class="status${stale}"><span class="dot off"></span>Offline</span>`;
-  $("#dlg-title").innerHTML = esc(s.ip) + COPY_ICON;
+  $("#dlg-title").textContent = s.ip;
   $("#dlg-sub").innerHTML = `<span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${status}`;
   $("#dlg-ext").href = `https://mcsrvstat.us/server/${encodeURIComponent(s.ip)}`;
   $("#dlg-nmc").href = `https://namemc.com/server/${encodeURIComponent(s.ip)}`;
@@ -495,7 +490,7 @@ function renderInfo(){
       : x.r.online ? `<span class="status"><span class="dot on"></span>Online</span>`
       : `<span class="status"><span class="dot off"></span>Offline</span>`; };
   const routes = s.routes || [];
-  const routesHtml = routes.length ? `<div class="kv">${routes.map(x => `<div class="kr rt"><b><button type="button" class="dbgbtn" data-act="copyroute" data-ip="${esc(x.ip)}" title="Copy">${esc(x.ip)}${COPY_ICON}</button></b><span>${esc(x.label)}</span><small>${rstat(x.ip)}</small></div>`).join("")}</div>`
+  const routesHtml = routes.length ? `<div class="kv">${routes.map(x => `<div class="kr rt"><b><button type="button" class="dbgbtn" data-act="copyroute" data-ip="${esc(x.ip)}" title="Copy">${esc(x.ip)}</button></b><span>${esc(x.label)}</span><small>${rstat(x.ip)}</small></div>`).join("")}</div>`
     : `<p class="dnote">No alternate routes listed for this server.</p>`;
 
   const box = $("#dlg-body"), top = box.scrollTop;
@@ -515,11 +510,15 @@ function openInfo(ip){
 }
 $("#dlg-body").addEventListener("click", e => {
   const rb = e.target.closest("[data-act=copyroute]");
-  if(rb){ const r = rb.dataset.ip; copyText(r); return; }
+  if(rb){
+    const r = rb.dataset.ip;
+    copyText(r).then(ok => {
+      rb.textContent = ok ? "Copied!" : "Couldn't copy";
+      setTimeout(() => { rb.textContent = r; }, 1200);
+    });
+    return;
+  }
 });
-const copyTitle = () => { if(dlgIp) copyText(dlgIp); };
-$("#dlg-title").addEventListener("click", copyTitle);
-$("#dlg-title").addEventListener("keydown", e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); copyTitle(); } });
 $("#dlg-close").addEventListener("click", () => dlg.close());
 $("#dlg-copy").addEventListener("click", e => dlgIp && copyIp(dlgIp, e.currentTarget));
 dlg.addEventListener("click", e => { if(e.target === dlg) dlg.close(); }); // click on the backdrop
