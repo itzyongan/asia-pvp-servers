@@ -3,19 +3,71 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AS Servers | Asia Minecraft PvP Server List</title>
-<meta name="description" content="1.9+ Asia Minecraft PvP servers. Duels, FFA and sandbox with Swords, Crystals, Netherite, Boxing and more.">
+
+<!-- Primary SEO -->
+<title>Asia Minecraft PvP Servers (1.9+) | Duels, FFA &amp; Sandbox – AS Servers</title>
+<meta name="description" content="Live list of Asia Minecraft PvP servers for 1.9+. Find Duels, FFA and Sandbox servers in Singapore, South Korea and India with player counts. Click an IP to copy it.">
+<meta name="keywords" content="asia minecraft pvp servers, minecraft pvp server list, singapore minecraft servers, minecraft duels server, minecraft crystal pvp, low ping minecraft servers, cracked minecraft pvp servers">
+<meta name="author" content="itzyongan">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://asia-pvp-servers.vercel.app/">
+
+<!-- Appearance -->
 <meta name="theme-color" content="#1a1d22">
 <meta name="color-scheme" content="dark">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary">
-<meta property="og:title" content="AS Servers | Asia Minecraft PvP Server List">
-<meta property="og:description" content="Find low-ping Asia Minecraft PvP servers. Click an IP to copy it.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%235fa83a'/%3E%3Crect y='5' width='16' height='11' fill='%238a5a33'/%3E%3C/svg%3E">
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AS Servers">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://asia-pvp-servers.vercel.app/">
+<meta property="og:title" content="Asia Minecraft PvP Servers (1.9+) | Duels, FFA &amp; Sandbox">
+<meta property="og:description" content="Find low-ping Asia Minecraft PvP servers with live player counts. Click an IP to copy it.">
+<meta property="og:image" content="https://asia-pvp-servers.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="AS Servers: Asia Minecraft PvP server list">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Asia Minecraft PvP Servers (1.9+) | Duels, FFA &amp; Sandbox">
+<meta name="twitter:description" content="Find low-ping Asia Minecraft PvP servers with live player counts. Click an IP to copy it.">
+<meta name="twitter:image" content="https://asia-pvp-servers.vercel.app/og-image.png">
+
+<!-- Structured data (the server ItemList is added by the script once the list loads) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://asia-pvp-servers.vercel.app/#website",
+      "url": "https://asia-pvp-servers.vercel.app/",
+      "name": "AS Servers",
+      "description": "A list of Minecraft PvP servers in Asia for Duels, FFA and Sandbox.",
+      "inLanguage": "en",
+      "publisher": {"@type": "Person", "name": "itzyongan", "url": "https://linktr.ee/itzyongan"}
+    },
+    {
+      "@type": "CollectionPage",
+      "@id": "https://asia-pvp-servers.vercel.app/#page",
+      "url": "https://asia-pvp-servers.vercel.app/",
+      "name": "Asia Minecraft PvP Servers (1.9+)",
+      "isPartOf": {"@id": "https://asia-pvp-servers.vercel.app/#website"},
+      "about": {"@type": "Thing", "name": "Minecraft PvP servers in Asia"},
+      "inLanguage": "en"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json" id="ld-list"></script>
+
+<!-- Performance -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.mcstatus.io" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap"></noscript>
+
 <style>
 :root{
   --deepslate:#1a1d22; --stone:#262a31; --stone-hi:#323843; --line:#3b424e;
@@ -24,23 +76,22 @@
   --px:'Rubik','Noto Sans',system-ui,sans-serif; --body:'Noto Sans',system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0}
-html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-y:scroll;scrollbar-gutter:stable}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overflow-y:scroll;scrollbar-gutter:stable;scroll-padding-top:70px}
 body{background:var(--deepslate);color:var(--text);font:400 16px/1.6 var(--body);-webkit-font-smoothing:antialiased}
 a{color:inherit}
 :focus-visible{outline:3px solid var(--diamond);outline-offset:2px}
 .wrap{max-width:960px;margin:0 auto;padding:0 20px}
 
 /* hero: grass strip on top, like the top layer of a world */
-.grass{height:14px;background:
-  linear-gradient(var(--grass) 0 8px,var(--grass-dk) 8px 14px)}
+.grass{height:14px;background:linear-gradient(var(--grass) 0 8px,var(--grass-dk) 8px 14px)}
 header.hero{position:relative;padding:72px 0 48px;border-bottom:4px solid #000}
 .statuslink{position:absolute;top:20px;right:20px;display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--muted);text-decoration:none;padding:4px 2px}
 .statuslink::before{content:"";width:8px;height:8px;background:var(--grass)}
 .statuslink:hover{color:var(--text);text-decoration:underline;text-underline-offset:4px}
-.hero h1{font:700 clamp(40px,8vw,72px)/1.02 var(--px);letter-spacing:-.01em;text-shadow:4px 4px 0 #000}
+.hero h1{font:700 clamp(38px,8vw,72px)/1.02 var(--px);letter-spacing:-.01em;text-shadow:4px 4px 0 #000}
 .hero h1 em{font-style:normal;color:var(--gold)}
 .hero p{max-width:52ch;margin:24px 0 32px;color:var(--muted);font-size:18px}
-.hero .cta{display:flex;flex-wrap:wrap;gap:12px}
+.cta{display:flex;flex-wrap:wrap;gap:12px}
 .btn{font:700 15px var(--body);text-decoration:none;padding:12px 20px;border:3px solid #000;
   background:var(--grass);color:#fff;box-shadow:inset -3px -3px 0 var(--grass-dk),inset 3px 3px 0 #7fc457;cursor:pointer}
 .btn:hover{filter:brightness(1.08)}
@@ -65,7 +116,7 @@ h2{font:700 26px/1.2 var(--px);margin:40px 0 6px}
 h2:first-child{margin-top:0}
 .sub{color:var(--muted);font-size:14px;margin-bottom:16px}
 .list{display:grid;gap:8px;list-style:none;padding:0}
-.srv{display:grid;grid-template-columns:52px 1fr auto auto;gap:16px;align-items:center;
+.srv{display:grid;grid-template-columns:52px 1fr auto auto;gap:16px;align-items:center;cursor:pointer;
   background:var(--stone);border:2px solid var(--line);padding:10px 14px 10px 10px}
 .srv:hover{border-color:#fff}
 .icon{width:52px;height:52px;display:grid;place-items:center;border:2px solid #000;font:700 22px var(--px);color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.6);overflow:hidden}
@@ -81,17 +132,26 @@ h2:first-child{margin-top:0}
 .chip.n{opacity:.45;text-decoration:line-through}
 .chip.u{opacity:.6}
 .status{display:inline-flex;align-items:center;gap:6px}
-.dot{width:9px;height:9px;background:var(--muted)}
 .status.stale{opacity:.5}
-.dot.on{background:var(--grass)}.dot.off{background:var(--no)}
+.dot{width:9px;height:9px;background:var(--muted)}
+.dot.on{background:var(--grass)}
+.dot.off{background:var(--no)}
 .copy{padding:8px 16px;font-size:14px;white-space:nowrap;min-width:92px}
-.srv{cursor:pointer}
 .empty{padding:32px;text-align:center;color:var(--muted);border:2px dashed var(--line)}
 
-/* footer sections */
+/* about + FAQ (static text for readers and search engines) */
+.about{padding:32px 0 8px}
+.about h2{margin-top:0}
+.about p{color:var(--muted);max-width:70ch;margin-bottom:12px}
+.about h3{font:700 18px/1.3 var(--px);margin:24px 0 12px}
+.faq details{background:var(--stone);border:2px solid var(--line);margin-bottom:8px}
+.faq summary{cursor:pointer;padding:12px 16px;font-weight:700}
+.faq details p{padding:0 16px 14px;margin:0}
+
+/* get-involved cards + footer */
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;padding:32px 0 56px}
 .card{background:var(--stone);border:2px solid var(--line);padding:22px}
-.card h3{font:700 20px/1.3 var(--px);margin-bottom:8px}
+.card h2{font:700 20px/1.3 var(--px);margin:0 0 8px}
 .card p{color:var(--muted);font-size:15px;margin-bottom:16px}
 footer{border-top:4px solid #000;padding:24px 0 40px;color:var(--muted);font-size:14px}
 footer .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
@@ -106,7 +166,7 @@ body:has(dialog[open]){overflow:hidden}
 .dh{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:3px solid #000;background:var(--stone-hi)}
 .dh .icon{width:48px;height:48px;flex:none;font-size:20px}
 .dt{flex:1;min-width:0}
-.dt h3{font:700 19px/1.25 var(--px);overflow-wrap:anywhere}
+.dt h2{font:700 19px/1.25 var(--px);margin:0;overflow-wrap:anywhere}
 .ds{display:flex;flex-wrap:wrap;align-items:center;gap:2px 14px;color:var(--muted);font-size:13.5px;margin-top:2px}
 .dh .x{padding:6px 12px;font-size:14px;flex:none}
 .db{padding:16px;overflow-y:auto;display:grid;gap:18px;align-content:start}
@@ -121,12 +181,13 @@ body:has(dialog[open]){overflow:hidden}
 .kr.rt{grid-template-columns:1fr auto}
 .kr.rt>b{text-align:left}
 .kr.rt>span{text-align:right}
-.kr.rt small{justify-content:flex-start}
 .kr small{grid-column:1/-1;display:flex;justify-content:flex-end;color:var(--muted);font-size:12.5px}
+.kr.rt small{justify-content:flex-start}
 .df{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-top:3px solid #000;background:var(--stone-hi);font-size:14px}
 .fl{display:flex;flex-wrap:wrap;gap:4px 16px;min-width:0}
 .df a{color:var(--diamond);text-underline-offset:3px}
 .df .copy{min-width:112px}
+
 @media (max-width:640px){
   dialog{margin:auto 0 0;width:100%;max-height:92%;border-width:3px 0 0}
   .df{flex-direction:row-reverse}
@@ -136,7 +197,9 @@ body:has(dialog[open]){overflow:hidden}
   .icon{width:44px;height:44px;font-size:18px}
   .copy{grid-column:1/-1}
   .modes{grid-column:1/-1;justify-content:flex-start}
-  input[type=search]{width:100%}.tools{width:100%}select{flex:1}
+  input[type=search]{width:100%}
+  .tools{width:100%}
+  select{flex:1}
 }
 </style>
 </head>
@@ -146,7 +209,7 @@ body:has(dialog[open]){overflow:hidden}
 <header class="hero">
   <a class="statuslink" href="https://stats.uptimerobot.com/qyZBlkRGF3" target="_blank" rel="noopener">Status page</a>
   <div class="wrap">
-    <h1>Asia <em>PvP</em><br>server list</h1>
+    <h1>Minecraft <em>PvP</em><br>servers in Asia</h1>
     <p>Low-ping 1.9+ practice servers across Asia. Duels, free-for-all and sandbox with Swords, Crystals, Netherite, Boxing and more.</p>
     <div class="cta">
       <a class="btn" href="#servers" id="browse">Browse servers</a>
@@ -179,15 +242,45 @@ body:has(dialog[open]){overflow:hidden}
 
 <main class="wrap" id="out"><noscript><div class="empty">Turn on JavaScript to see the server list, or read it on <a href="https://github.com/itzyongan/asia-pvp-servers">GitHub</a>.</div></noscript></main>
 
+<section class="wrap about" aria-labelledby="about-title">
+  <h2 id="about-title">About this Asia Minecraft PvP server list</h2>
+  <p>AS Servers is a hand-picked list of Minecraft PvP servers hosted in Asia, mostly in Singapore, with more in South Korea and India. Every server supports Minecraft 1.9+ combat and is sorted by the game modes it offers: <strong>Duels</strong>, <strong>FFA</strong> (free-for-all) and <strong>Sandbox</strong>. Player counts update live each time you open the page.</p>
+  <p>Playing on a server close to you means lower ping, which matters most in sword, crystal and Netherite PvP. Click any server to see its alternate routes, or press <em>Copy IP</em> and paste it into the multiplayer menu.</p>
+
+  <h3>Frequently asked questions</h3>
+  <div class="faq">
+    <details>
+      <summary>What is the best Minecraft PvP server in Asia?</summary>
+      <p>Servers marked with a star are our top picks, chosen for their Asia-based hosting and active player base. The best one for you depends on your location and the mode you want, so use the mode and region filters above.</p>
+    </details>
+    <details>
+      <summary>What is the difference between Premium and Cracked servers?</summary>
+      <p>Premium servers require a paid Minecraft Java account. Cracked servers are also open to non-premium accounts.</p>
+    </details>
+    <details>
+      <summary>Which Minecraft version do these servers use?</summary>
+      <p>The list focuses on 1.9+ servers with modern PvP such as crystals, Netherite and shields. Check each server's own page for its exact supported versions.</p>
+    </details>
+    <details>
+      <summary>How do I join a server from the list?</summary>
+      <p>Click <em>Copy IP</em> on a server, open Minecraft Java Edition, go to Multiplayer, choose Add Server and paste the address.</p>
+    </details>
+    <details>
+      <summary>How can I add my server to the list?</summary>
+      <p>Open a pull request on the <a href="https://github.com/itzyongan/asia-pvp-servers" target="_blank" rel="noopener">GitHub repository</a> and add your server to the README table, or ask in the Discord community.</p>
+    </details>
+  </div>
+</section>
+
 <section class="wrap" aria-label="Get involved">
   <div class="cards">
     <div class="card">
-      <h3>Suggest a server</h3>
+      <h2>Suggest a server</h2>
       <p>Know a good Asia PvP server that is missing? Open a pull request and add it to the list.</p>
       <a class="btn" href="https://github.com/itzyongan/asia-pvp-servers" target="_blank" rel="noopener">Open GitHub repo</a>
     </div>
     <div class="card">
-      <h3>Need help?</h3>
+      <h2>Need help?</h2>
       <p>Questions, broken IPs or server ideas? Ask in the Discord community.</p>
       <a class="btn alt" href="https://discord.gg/TTAgYjXmkh" target="_blank" rel="noopener">Join Discord</a>
     </div>
@@ -204,38 +297,54 @@ body:has(dialog[open]){overflow:hidden}
 <dialog id="dlg" aria-labelledby="dlg-title">
   <div class="dh">
     <div class="icon" id="dlg-icon" aria-hidden="true"></div>
-    <div class="dt"><h3 id="dlg-title"></h3><div class="ds" id="dlg-sub"></div></div>
+    <div class="dt"><h2 id="dlg-title"></h2><div class="ds" id="dlg-sub"></div></div>
     <button class="btn alt x" id="dlg-close" type="button" aria-label="Close">✕</button>
   </div>
   <div class="db" id="dlg-body"></div>
   <div class="df">
-    <div class="fl"><a id="dlg-ext" href="#" target="_blank" rel="noopener">Server debug</a><a id="dlg-geo" href="#" target="_blank" rel="noopener">IP lookup</a><a id="dlg-nmc" href="#" target="_blank" rel="noopener">View on NameMC</a></div>
+    <div class="fl">
+      <a id="dlg-ext" href="#" target="_blank" rel="noopener">Server debug</a>
+      <a id="dlg-geo" href="#" target="_blank" rel="noopener">IP lookup</a>
+      <a id="dlg-nmc" href="#" target="_blank" rel="noopener">View on NameMC</a>
+    </div>
     <button class="btn copy" id="dlg-copy" type="button">Copy IP</button>
   </div>
 </dialog>
 
 <script>
+"use strict";
 const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+/* ---------- State ---------- */
 // Live status from the last visit (up to 1 hour old) is shown dimmed for an instant first paint.
 // Every page load re-checks every server, and each row brightens once its fresh numbers arrive.
-const CACHE_KEY = "as-status-v8", MAX_AGE = 60*60*1000;
-const fresh = new Set(); // servers whose numbers were refreshed during this page load
+const CACHE_KEY = "as-status-v8", MAX_AGE = 60 * 60 * 1000;
+const LIST_KEY = "as-list-v2";
+const fresh = new Set();   // servers whose numbers were refreshed during this page load
+const flash = {};          // per-server button label ("Copied!") kept in data so a row redraw can't wipe it
+const routeStatus = {};    // alternate-route host -> {t, busy, r}
+let S = [];                // the server list
+let dlgIp = null;          // server shown in the pop-up
+
+function readStore(key){
+  try{ return JSON.parse(localStorage.getItem(key) || "null"); }catch{ return null; }
+}
+function writeStore(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }catch{}
+}
 function loadCache(){
-  try{
-    const c = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
-    if(c && Date.now() - c.t < MAX_AGE)return c.d;
-  }catch{}
-  return {};
+  const c = readStore(CACHE_KEY);
+  return c && Date.now() - c.t < MAX_AGE ? c.d : {};
 }
 function saveCache(){
-  try{
-    const ok = Object.fromEntries(Object.entries(state.status).filter(([,v]) => !v.unknown));
-    localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:ok}));
-  }catch{}
+  const d = Object.fromEntries(Object.entries(state.status).filter(([, v]) => !v.unknown));
+  writeStore(CACHE_KEY, {t: Date.now(), d});
 }
-const state = {mode:"all", q:"", region:"all", sort:"default", status:loadCache()};
+const state = {mode: "all", q: "", region: "all", sort: "default", status: loadCache()};
 
-// Keep filters in the address bar so a filtered view can be shared as a link.
+/* ---------- Shareable filters in the address bar ---------- */
+const MODES = ["duels", "ffa", "sandbox"];
 function syncUrl(){
   const p = new URLSearchParams();
   if(state.mode !== "all") p.set("mode", state.mode);
@@ -247,16 +356,17 @@ function syncUrl(){
 }
 function readUrl(){
   const p = new URLSearchParams(location.search);
-  if(["duels","ffa","sandbox"].includes(p.get("mode"))) state.mode = p.get("mode");
+  if(MODES.includes(p.get("mode"))) state.mode = p.get("mode");
   if(p.get("region") && S.some(s => s.region === p.get("region"))) state.region = p.get("region");
   if(p.get("sort") === "players") state.sort = "players";
   state.q = (p.get("q") || "").slice(0, 60);
-  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-pressed", t.dataset.mode === state.mode));
-  $("#region").value = state.region; $("#sort").value = state.sort; $("#q").value = state.q;
+  $$(".tab").forEach(t => t.setAttribute("aria-pressed", t.dataset.mode === state.mode));
+  $("#region").value = state.region;
+  $("#sort").value = state.sort;
+  $("#q").value = state.q;
 }
-let S = [];
 
-// The server list is read straight from README.md, so there is no sync step to break.
+/* ---------- Server list (parsed straight from README.md) ---------- */
 // Edit the README tables and commit: the site updates on the next deploy.
 // The copy deployed next to this page is always current once Vercel finishes deploying.
 // GitHub raw is only a backup: it caches for 5 minutes, so it can be stale.
@@ -312,7 +422,7 @@ function parse(md){
       continue;
     }
     if(!type || !line.trim().startsWith("|")) continue;
-    const c = line.trim().replace(/^\||\|$/g,"").split("|").map(x=>x.trim());
+    const c = line.trim().replace(/^\||\|$/g, "").split("|").map(x => x.trim());
     if(c.length < 5 || /^[-:\s]+$/.test(c[0]) || /^server ip$/i.test(c[0])) continue;
     const flag = (c[1].match(/[\u{1F1E6}-\u{1F1FF}]{2}/u) || [""])[0];
     const region = flag ? [...flag].map(ch => String.fromCharCode(ch.codePointAt(0) - 127397)).join("") : "??";
@@ -333,7 +443,7 @@ function parse(md){
 async function load(){
   for(const url of README_URLS){
     try{
-      const r = await fetch(url, {cache:"no-cache"});
+      const r = await fetch(url, {cache: "no-cache"});
       if(!r.ok) continue;
       const data = parse(await r.text());
       if(data.length) return data;
@@ -342,38 +452,52 @@ async function load(){
   return [];
 }
 
-const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const flagOf = code => code.length===2 && code!=="??" ? [...code].map(c=>String.fromCodePoint(c.charCodeAt(0)+127397)).join("") : "🌏";
-const regionNames = (() => { try{ return new Intl.DisplayNames(["en"], {type:"region"}); }catch{ return null; } })();
+/* ---------- Small helpers ---------- */
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const flagOf = code => code.length === 2 && code !== "??" ? [...code].map(c => String.fromCodePoint(c.charCodeAt(0) + 127397)).join("") : "🌏";
+const regionNames = (() => { try{ return new Intl.DisplayNames(["en"], {type: "region"}); }catch{ return null; } })();
 const nameCache = {};
 const nameOf = code => nameCache[code] ??= (() => { try{ return regionNames.of(code); }catch{ return code; } })();
-const hue = ip => [...ip].reduce((h,c)=>h*31+c.charCodeAt(0)|0,7);
-const chip = (label,v) => {
-  const c = v===1?"y":v==="l"?"l":v===0?"n":"u";
-  const t = v===1?"available":v==="l"?"limited":v===0?"unavailable":"unverified";
-  return `<span class="chip ${c}" title="${label}: ${t}">${label}${v==="l"?" (limited)":""}${v===null?" ?":""}</span>`;
+const hue = ip => Math.abs([...ip].reduce((h, c) => h * 31 + c.charCodeAt(0) | 0, 7)) % 360;
+const letterOf = ip => ip.replace(/^(as|play)\./, "")[0].toUpperCase();
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+const chip = (label, v) => {
+  const cls = v === 1 ? "y" : v === "l" ? "l" : v === 0 ? "n" : "u";
+  const text = v === 1 ? "available" : v === "l" ? "limited" : v === 0 ? "unavailable" : "unverified";
+  return `<span class="chip ${cls}" title="${label}: ${text}">${label}${v === "l" ? " (limited)" : ""}${v === null ? " ?" : ""}</span>`;
 };
 
 // The server's own icon comes with its status lookup (a data: image); without one the letter tile is shown.
-function iconImg(icon, letter, lazy){
-  return `<img src="${esc(icon)}" alt="" width="64" height="64"${lazy ? ' loading="lazy"' : ""} decoding="async" data-l="${esc(letter)}" onerror="this.replaceWith(this.dataset.l)">`;
+function iconHtml(st, ip, lazy){
+  const letter = letterOf(ip);
+  if(!st?.icon) return esc(letter);
+  return `<img src="${esc(st.icon)}" alt="" width="64" height="64"${lazy ? ' loading="lazy"' : ""} decoding="async" data-l="${esc(letter)}" onerror="this.replaceWith(this.dataset.l)">`;
 }
-const flash = {}; // per-server button label ("Copied!") kept in data so a row redraw can't wipe it
+
+// One status badge for rows, the pop-up header and alternate routes.
+// st: undefined = still checking, {unknown} = both services failed, else {online, players}.
+function statusBadge(st, {ip, online} = {}){
+  let dot = "", text;
+  if(!st) text = "Checking";
+  else if(st.unknown) text = "Status unavailable";
+  else if(st.online){ dot = " on"; text = online ?? `${st.players} online`; }
+  else { dot = " off"; text = "Offline"; }
+  const stale = st && !st.unknown && ip && !fresh.has(ip) ? " stale" : "";
+  return `<span class="status${stale}"><span class="dot${dot}"></span>${text}</span>`;
+}
+
+/* ---------- Rendering ---------- */
 function rowInner(s){
-  const h = Math.abs(hue(s.ip))%360, st = state.status[s.ip];
-  let status = st===undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
-    : st.unknown ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
-    : st.online ? `<span class="status"><span class="dot on"></span>${st.players} online</span>`
-    : `<span class="status"><span class="dot off"></span>Offline</span>`;
+  const st = state.status[s.ip];
   const fl = flash[s.ip], label = fl && fl.until > Date.now() ? fl.text : "Copy IP";
-  const statusHtml = st && !st.unknown && !fresh.has(s.ip) ? status.replace('class="status"','class="status stale"') : status;
   return `
-    <div class="icon" style="background:hsl(${h} 35% 32%)" aria-hidden="true">${st?.icon ? iconImg(st.icon, s.ip.replace(/^(as|play)\./,"")[0].toUpperCase(), true) : esc(s.ip.replace(/^(as|play)\./,"")[0].toUpperCase())}</div>
+    <div class="icon" style="background:hsl(${hue(s.ip)} 35% 32%)" aria-hidden="true">${iconHtml(st, s.ip, true)}</div>
     <div>
-      <button class="ip" data-ip="${esc(s.ip)}" aria-label="Show info for ${esc(s.ip)}">${s.top?'<span class="star" title="Top pick">★</span>':""}${esc(s.ip)}</button>
-      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${statusHtml}${s.note?`<span>${esc(s.note)}</span>`:""}</div>
+      <button class="ip" data-ip="${esc(s.ip)}" aria-label="Show info for ${esc(s.ip)}">${s.top ? '<span class="star" title="Top pick">★</span>' : ""}${esc(s.ip)}</button>
+      <div class="meta"><span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${statusBadge(st, {ip: s.ip})}${s.note ? `<span>${esc(s.note)}</span>` : ""}</div>
     </div>
-    <div class="modes">${chip("Duels",s.duels)}${chip("FFA",s.ffa)}${chip("Sandbox",s.sandbox)}</div>
+    <div class="modes">${chip("Duels", s.duels)}${chip("FFA", s.ffa)}${chip("Sandbox", s.sandbox)}</div>
     <button class="btn copy" data-ip="${esc(s.ip)}">${label}</button>
   `;
 }
@@ -387,50 +511,61 @@ function byPlayers(a, b){
   const pa = state.status[a.ip], pb = state.status[b.ip];
   return (pb?.online ? pb.players : -1) - (pa?.online ? pa.players : -1);
 }
+
+// Redraw while keeping the row under the sticky bar at the same place on screen.
 function keepAnchor(fn){
-  const barH = document.querySelector(".bar")?.offsetHeight || 0;
-  const a = [...document.querySelectorAll(".srv")].find(r => r.getBoundingClientRect().bottom > barH);
+  const barH = $(".bar")?.offsetHeight || 0;
+  const a = [...$$(".srv")].find(r => r.getBoundingClientRect().bottom > barH);
   const ip = a?.dataset.ip, top = a?.getBoundingClientRect().top;
   fn();
   if(!ip) return;
-  const n = document.querySelector(`.srv[data-ip="${CSS.escape(ip)}"]`);
+  const n = $(`.srv[data-ip="${CSS.escape(ip)}"]`);
   if(n) scrollBy({top: n.getBoundingClientRect().top - top, behavior: "instant"});
 }
+
 function render(){
   syncUrl();
   const q = state.q.trim().toLowerCase();
-  const f = S.filter(s =>
-    (state.mode==="all" || s[state.mode]===1 || s[state.mode]==="l") &&
-    (state.region==="all" || s.region===state.region) &&
+  const matches = S.filter(s =>
+    (state.mode === "all" || s[state.mode] === 1 || s[state.mode] === "l") &&
+    (state.region === "all" || s.region === state.region) &&
     (!q || s.ip.toLowerCase().includes(q)));
-  const none = `<div class="empty">No servers match your filters. Clear the search or pick another mode.</div>`;
-  const group = (type,title,sub) => {
-    const items = f.filter(s=>s.type===type).sort(state.sort === "players" ? byPlayers : byTop);
+  const group = (type, title, sub) => {
+    const items = matches.filter(s => s.type === type).sort(state.sort === "players" ? byPlayers : byTop);
     return items.length ? `<h2>${title}</h2><p class="sub">${sub}</p><ul class="list">${items.map(row).join("")}</ul>` : "";
   };
-  $("#out").innerHTML = (group("premium","Premium servers","Require a paid Minecraft account.") +
-    group("cracked","Cracked servers","Also open to non-premium accounts.")) || none;
+  $("#out").innerHTML =
+    group("premium", "Premium servers", "Require a paid Minecraft account.") +
+    group("cracked", "Cracked servers", "Also open to non-premium accounts.") ||
+    `<div class="empty">No servers match your filters. Clear the search or pick another mode.</div>`;
 }
 
+// Hero stats, region filter, and the ItemList structured data all follow the loaded list.
 function setup(){
-  const regions = [...new Set(S.map(s=>s.region))];
+  const regions = [...new Set(S.map(s => s.region))];
   $("#region").innerHTML = '<option value="all">All regions</option>' +
-    regions.map(r=>`<option value="${r}">${flagOf(r)} ${esc(nameOf(r))}</option>`).join("");
-  $("#stats").innerHTML = `<span><b>${S.length}</b> servers</span><span><b>${S.filter(s=>s.top).length}</b> top picks</span><span><b>${regions.length}</b> regions</span><span id="online"></span>`;
+    regions.map(r => `<option value="${r}">${flagOf(r)} ${esc(nameOf(r))}</option>`).join("");
+  $("#stats").innerHTML =
+    `<span><b>${S.length}</b> servers</span><span><b>${S.filter(s => s.top).length}</b> top picks</span>` +
+    `<span><b>${regions.length}</b> regions</span><span id="online"></span>`;
+  writeItemList();
+}
+function writeItemList(){
+  const json = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Asia Minecraft PvP servers",
+    numberOfItems: S.length,
+    itemListElement: S.map((s, i) => ({"@type": "ListItem", position: i + 1, name: s.ip}))
+  });
+  $("#ld-list").textContent = json.replace(/</g, "\\u003c");
+}
+function showOnline(){
+  const on = S.filter(s => state.status[s.ip]?.online);
+  if(on.length) $("#online").innerHTML = `<b>${on.reduce((n, s) => n + state.status[s.ip].players, 0)}</b> players online now`;
 }
 
-// events
-$("#tabs").addEventListener("click", e => {
-  const b = e.target.closest(".tab"); if(!b) return;
-  state.mode = b.dataset.mode;
-  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-pressed", t===b));
-  render();
-});
-let qTimer;
-$("#q").addEventListener("input", e=>{ clearTimeout(qTimer); const v = e.target.value; qTimer = setTimeout(() => { state.q = v; render(); }, 120); });
-$("#region").addEventListener("change", e=>{state.region=e.target.value;render()});
-$("#sort").addEventListener("change", e=>{state.sort=e.target.value;render()});
-// Click anywhere on a server box to copy its IP.
+/* ---------- Copy to clipboard ---------- */
 async function copyText(text){
   try{ await navigator.clipboard.writeText(text); return true; }catch{}
   try{ // fallback for older browsers
@@ -444,85 +579,138 @@ async function copyIp(ip, btn){
   const ok = await copyText(ip);
   flash[ip] = {text: ok ? "Copied!" : "Couldn't copy", until: Date.now() + 1400};
   const set = t => {
-    const b = btn.isConnected ? btn : document.querySelector(`.srv[data-ip="${CSS.escape(ip)}"] .copy`);
+    const b = btn.isConnected ? btn : $(`.srv[data-ip="${CSS.escape(ip)}"] .copy`);
     if(b) b.textContent = t;
   };
   set(flash[ip].text);
   setTimeout(() => { if(Date.now() >= flash[ip].until) set("Copy IP"); }, 1450);
 }
 
-// ---- Server pop-up ----
-const dlg = $("#dlg"); let dlgIp = null;
+/* ---------- Live status ---------- */
+// Primary source: mcstatus.io (fast). If it fails, or says "offline", mcsrvstat.us double-checks.
+async function getJson(url, ms){
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), ms);
+  try{
+    const r = await fetch(url, {signal: ctl.signal});
+    if(!r.ok) throw new Error("http " + r.status);
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
+const num = v => Number.isFinite(v) ? v : 0;
+const dataIcon = i => typeof i === "string" && i.startsWith("data:image/") ? i : null;
+const SOURCES = [
+  ip => getJson(`https://api.mcstatus.io/v2/status/java/${encodeURIComponent(ip)}?query=false&timeout=4`, 7000),
+  ip => getJson(`https://api.mcsrvstat.us/3/${encodeURIComponent(ip)}`, 9000)
+];
+const toStatus = d => ({online: !!d.online, players: num(d.players?.online), icon: dataIcon(d.icon)});
 
-// Alternate routing: the routes come from the README rows (see rowRoutes), so the list and its routes always update together.
-// Their online status is checked each time the pop-up opens.
-const routeStatus = {};
+// First "online" answer wins; otherwise the first answer we got; null if every service failed.
+async function lookup(ip){
+  let first = null;
+  for(const source of SOURCES){
+    try{
+      const r = toStatus(await source(ip));
+      if(r.online) return r;
+      first ??= r;
+    }catch{}
+  }
+  return first;
+}
+
+async function refresh(s){
+  const r = await lookup(s.ip);
+  if(r){
+    fresh.add(s.ip);
+    state.status[s.ip] = r;
+  }else if(!state.status[s.ip] || state.status[s.ip].unknown){
+    state.status[s.ip] = {unknown: true};
+  }
+  // Redraw from the CURRENT list: if the README refresh replaced the saved list while this lookup
+  // was running, `s` is an outdated copy (e.g. missing a newly added star).
+  const cur = S.find(x => x.ip === s.ip);
+  const li = $(`.srv[data-ip="${CSS.escape(s.ip)}"]`);
+  if(li && cur) li.innerHTML = rowInner(cur);
+  if(dlgIp === s.ip) renderInfo();
+}
+async function runPool(list, n){
+  const queue = [...list];
+  await Promise.all(Array.from({length: n}, async () => { while(queue.length) await refresh(queue.shift()); }));
+}
+async function checkAll(){
+  await runPool(S, 6); // every server is checked directly; each row updates as its answer arrives
+  const failed = S.filter(s => !fresh.has(s.ip));
+  if(failed.length){ await new Promise(r => setTimeout(r, 2500)); await runPool(failed, 2); } // one gentle retry
+  saveCache();
+  showOnline();
+  if(state.sort === "players") keepAnchor(render); // re-order once the fresh counts are in
+}
+
+/* ---------- Server pop-up ---------- */
+const dlg = $("#dlg");
+
+// Alternate routes come from the README rows (see rowRoutes). Their status is checked each time the pop-up opens.
 async function checkRoutes(s){
   const hosts = (s.routes || []).map(r => r.ip).filter(h => !(routeStatus[h]?.t > Date.now() - 60000));
-  hosts.forEach(h => { routeStatus[h] = {...(routeStatus[h] || {}), t: Date.now(), busy: true}; });
+  hosts.forEach(h => { routeStatus[h] = {...routeStatus[h], t: Date.now(), busy: true}; });
   if(dlgIp === s.ip) renderInfo();
   await Promise.all(hosts.map(async h => {
-    const r = await lookup(h); // host or host:port
-    routeStatus[h] = {t: Date.now(), r};
+    routeStatus[h] = {t: Date.now(), r: await lookup(h)}; // host or host:port
     if(dlgIp === s.ip) renderInfo();
   }));
 }
-function renderInfo(){
-  const s = S.find(x => x.ip === dlgIp); if(!s) return;
-  const st = state.status[s.ip], h = Math.abs(hue(s.ip)) % 360;
-  const ic = $("#dlg-icon");
-  ic.style.background = `hsl(${h} 35% 32%)`;
-  ic.innerHTML = st?.icon ? iconImg(st.icon, s.ip.replace(/^(as|play)\./, "")[0].toUpperCase(), false) : esc(s.ip.replace(/^(as|play)\./, "")[0].toUpperCase());
-  const stale = st && !st.unknown && !fresh.has(s.ip) ? " stale" : "";
-  const status = st === undefined ? `<span class="status"><span class="dot"></span>Checking</span>`
-    : st.unknown ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
-    : st.online ? `<span class="status${stale}"><span class="dot on"></span>Online · ${st.players} player${st.players === 1 ? "" : "s"}</span>`
-    : `<span class="status${stale}"><span class="dot off"></span>Offline</span>`;
-  $("#dlg-title").textContent = s.ip;
-  $("#dlg-sub").innerHTML = `<span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>${status}`;
-  $("#dlg-ext").href = `https://mcsrvstat.us/server/${encodeURIComponent(s.ip)}`;
-  $("#dlg-nmc").href = `https://namemc.com/server/${encodeURIComponent(s.ip)}`;
-  $("#dlg-geo").href = `https://ipgeolocation.io/what-is-my-ip/${encodeURIComponent(s.ip)}`;
-
-  const rstat = h => { const x = routeStatus[h];
-    return !x || x.busy ? `<span class="status"><span class="dot"></span>Checking</span>`
-      : !x.r ? `<span class="status"><span class="dot"></span>Status unavailable</span>`
-      : x.r.online ? `<span class="status"><span class="dot on"></span>Online</span>`
-      : `<span class="status"><span class="dot off"></span>Offline</span>`; };
-  const routes = s.routes || [];
-  const routesHtml = routes.length ? `<div class="kv">${routes.map(x => `<div class="kr rt"><b><button type="button" class="dbgbtn" data-act="copyroute" data-ip="${esc(x.ip)}" title="Copy">${esc(x.ip)}</button></b><span>${esc(x.label)}</span><small>${rstat(x.ip)}</small></div>`).join("")}</div>`
-    : `<p class="dnote">No alternate routes listed for this server.</p>`;
-
-  const box = $("#dlg-body"), top = box.scrollTop;
-  box.innerHTML = `
-    <div><div class="dsec"><span>Alternate Routing</span></div>
-      ${routesHtml}</div>`;
-  box.scrollTop = top;
+function routeBadge(host){
+  const x = routeStatus[host];
+  const st = !x || x.busy ? undefined : x.r || {unknown: true};
+  return statusBadge(st, {online: "Online"});
 }
 
+function renderInfo(){
+  const s = S.find(x => x.ip === dlgIp); if(!s) return;
+  const st = state.status[s.ip], enc = encodeURIComponent(s.ip);
+  const icon = $("#dlg-icon");
+  icon.style.background = `hsl(${hue(s.ip)} 35% 32%)`;
+  icon.innerHTML = iconHtml(st, s.ip, false);
+  $("#dlg-title").textContent = s.ip;
+  $("#dlg-sub").innerHTML = `<span>${flagOf(s.region)} ${esc(nameOf(s.region))}</span>` +
+    statusBadge(st, {ip: s.ip, online: st?.online ? `Online · ${plural(st.players, "player")}` : undefined});
+  $("#dlg-ext").href = `https://mcsrvstat.us/server/${enc}`;
+  $("#dlg-nmc").href = `https://namemc.com/server/${enc}`;
+  $("#dlg-geo").href = `https://ipgeolocation.io/what-is-my-ip/${enc}`;
+
+  const routes = s.routes || [];
+  const routesHtml = routes.length
+    ? `<div class="kv">${routes.map(x => `<div class="kr rt"><b><button type="button" class="dbgbtn" data-act="copyroute" data-ip="${esc(x.ip)}" title="Copy">${esc(x.ip)}</button></b><span>${esc(x.label)}</span><small>${routeBadge(x.ip)}</small></div>`).join("")}</div>`
+    : `<p class="dnote">No alternate routes listed for this server.</p>`;
+
+  const box = $("#dlg-body"), scroll = box.scrollTop;
+  box.innerHTML = `<div><div class="dsec"><span>Alternate Routing</span></div>${routesHtml}</div>`;
+  box.scrollTop = scroll;
+}
 function openInfo(ip){
-  if(!S.some(x => x.ip === ip)) return;
+  const s = S.find(x => x.ip === ip); if(!s) return;
   dlgIp = ip;
   $("#dlg-copy").textContent = "Copy IP";
   renderInfo();
   if(!dlg.open) dlg.showModal();
-  checkRoutes(S.find(x => x.ip === ip));
+  checkRoutes(s);
 }
-$("#dlg-body").addEventListener("click", e => {
-  const rb = e.target.closest("[data-act=copyroute]");
-  if(rb){
-    const r = rb.dataset.ip;
-    copyText(r).then(ok => {
-      rb.textContent = ok ? "Copied!" : "Couldn't copy";
-      setTimeout(() => { rb.textContent = r; }, 1200);
-    });
-    return;
-  }
+
+/* ---------- Events ---------- */
+$("#tabs").addEventListener("click", e => {
+  const b = e.target.closest(".tab"); if(!b) return;
+  state.mode = b.dataset.mode;
+  $$(".tab").forEach(t => t.setAttribute("aria-pressed", t === b));
+  render();
 });
-$("#dlg-close").addEventListener("click", () => dlg.close());
-$("#dlg-copy").addEventListener("click", e => dlgIp && copyIp(dlgIp, e.currentTarget));
-dlg.addEventListener("click", e => { if(e.target === dlg) dlg.close(); }); // click on the backdrop
-dlg.addEventListener("close", () => { dlgIp = null; });
+let qTimer;
+$("#q").addEventListener("input", e => {
+  clearTimeout(qTimer);
+  const v = e.target.value;
+  qTimer = setTimeout(() => { state.q = v; render(); }, 120);
+});
+$("#region").addEventListener("change", e => { state.region = e.target.value; render(); });
+$("#sort").addEventListener("change", e => { state.sort = e.target.value; render(); });
+$("#browse").addEventListener("click", e => { e.preventDefault(); $("#servers").scrollIntoView({block: "start"}); });
 
 // Click a server box to open its pop-up. The Copy IP button still copies directly.
 $("#out").addEventListener("click", e => {
@@ -533,87 +721,46 @@ $("#out").addEventListener("click", e => {
   if(String(sel).trim() && sel.anchorNode && card.contains(sel.anchorNode)) return;
   openInfo(ip);
 });
+$("#dlg-body").addEventListener("click", async e => {
+  const b = e.target.closest("[data-act=copyroute]"); if(!b) return;
+  const host = b.dataset.ip;
+  b.textContent = (await copyText(host)) ? "Copied!" : "Couldn't copy";
+  setTimeout(() => { b.textContent = host; }, 1200);
+});
+$("#dlg-close").addEventListener("click", () => dlg.close());
+$("#dlg-copy").addEventListener("click", e => dlgIp && copyIp(dlgIp, e.currentTarget));
+dlg.addEventListener("click", e => { if(e.target === dlg) dlg.close(); }); // click on the backdrop
+dlg.addEventListener("close", () => { dlgIp = null; });
 
-// Live status. Primary source: mcstatus.io (fast). If it fails, or says "offline", mcsrvstat.us double-checks.
-const num = v => Number.isFinite(v) ? v : 0;
-const dataIcon = i => (typeof i === "string" && i.startsWith("data:image/")) ? i : null;
-async function getJson(url, ms){
-  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), ms);
-  try{
-    const r = await fetch(url, {signal:ctl.signal});
-    if(!r.ok) throw new Error("http " + r.status);
-    return await r.json();
-  } finally { clearTimeout(timer); }
-}
-async function lookupMcstatus(ip){
-  const d = await getJson(`https://api.mcstatus.io/v2/status/java/${encodeURIComponent(ip)}?query=false&timeout=4`, 7000);
-  return {online: !!d.online, players: num(d.players?.online), icon: dataIcon(d.icon)};
-}
-async function lookupMcsrvstat(ip){
-  const d = await getJson(`https://api.mcsrvstat.us/3/${encodeURIComponent(ip)}`, 9000);
-  return {online: !!d.online, players: num(d.players?.online), icon: dataIcon(d.icon)};
-}
-async function lookup(ip){
-  let first = null;
-  try{ first = await lookupMcstatus(ip); if(first.online) return first; }catch{}
-  try{ const second = await lookupMcsrvstat(ip); if(second.online || !first) return second; }catch{}
-  return first; // null means both services failed
-}
-async function ping(s){
-  const r = await lookup(s.ip);
-  if(r) fresh.add(s.ip);
-  if(r) state.status[s.ip] = r;
-  else if(!state.status[s.ip] || state.status[s.ip].unknown) state.status[s.ip] = {unknown:true};
-  // Redraw from the CURRENT list: if the README refresh replaced the saved list while this lookup
-  // was running, `s` is an outdated copy (e.g. missing a newly added star).
-  const cur = S.find(x => x.ip === s.ip);
-  const li = document.querySelector(`.srv[data-ip="${CSS.escape(s.ip)}"]`);
-  if(li && cur) li.innerHTML = rowInner(cur);
-  if(dlgIp === s.ip) renderInfo();
-}
-function showOnline(){
-  const on = S.filter(s => state.status[s.ip]?.online);
-  if(on.length) $("#online").innerHTML = `<b>${on.reduce((n,s) => n + state.status[s.ip].players, 0)}</b> players online now`;
-}
-async function runPool(list, n){
-  const queue = [...list];
-  await Promise.all(Array.from({length:n}, async () => { while(queue.length) await ping(queue.shift()); }));
-}
-async function checkAll(){
-  await runPool(S, 6); // every server is checked directly; each row updates as its answer arrives
-  const failed = S.filter(s => !fresh.has(s.ip));
-  if(failed.length){ await new Promise(r => setTimeout(r, 2500)); await runPool(failed, 2); } // one gentle retry
-  saveCache(); showOnline();
-  if(state.sort === "players") keepAnchor(render); // re-order once the fresh counts are in
-}
-
-// Server list: paint the saved copy straight away on repeat visits, then refresh from the README.
-const LIST_KEY = "as-list-v2";
-function savedList(){
-  try{ const c = JSON.parse(localStorage.getItem(LIST_KEY) || "null"); return Array.isArray(c) && c.length ? c : null; }catch{ return null; }
-}
+/* ---------- Start ---------- */
+// Paint the saved list straight away on repeat visits, then refresh it from the README.
 let checks = Promise.resolve();
 function applyList(data, first){
-  S = data; setup();
+  S = data;
+  setup();
   if(first) readUrl();
-  else { if(!S.some(s => s.region === state.region)) state.region = "all"; $("#region").value = state.region; }
+  else{
+    if(!S.some(s => s.region === state.region)) state.region = "all";
+    $("#region").value = state.region;
+  }
   if(first) render(); else keepAnchor(render);
   showOnline();
   checks = checks.then(checkAll);
 }
-$("#browse").addEventListener("click", e => { e.preventDefault(); $("#servers").scrollIntoView({block:"start"}); });
-const saved = savedList();
+
+const savedRaw = readStore(LIST_KEY);
+const saved = Array.isArray(savedRaw) && savedRaw.length ? savedRaw : null;
 if(saved) applyList(saved, true);
 else $("#out").innerHTML = '<div class="empty">Loading servers…</div>';
+
 load().then(data => {
   if(!data.length){
     if(!saved) $("#out").innerHTML = '<div class="empty">Could not load the server list. <a href="https://github.com/itzyongan/asia-pvp-servers">View it on GitHub</a>.</div>';
     return;
   }
-  const freshJson = JSON.stringify(data);
-  try{ localStorage.setItem(LIST_KEY, freshJson); }catch{}
+  writeStore(LIST_KEY, data);
   if(!saved) applyList(data, true);
-  else if(freshJson !== JSON.stringify(saved)) applyList(data, false);
+  else if(JSON.stringify(data) !== JSON.stringify(saved)) applyList(data, false);
 });
 </script>
 </body>
