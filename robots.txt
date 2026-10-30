@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://asia-pvp-servers.vercel.app/sitemap.xml
