@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://asia-pvp-servers.vercel.app/</loc>
-    <lastmod>2026-10-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
+<url><loc>https://asia-pvp-servers.vercel.app/</loc><lastmod>2026-11-07</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+<url><loc>https://asia-pvp-servers.vercel.app/singapore-minecraft-pvp-servers/</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+<url><loc>https://asia-pvp-servers.vercel.app/minecraft-duels-servers-asia/</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+<url><loc>https://asia-pvp-servers.vercel.app/minecraft-ffa-servers-asia/</loc><lastmod>2026-11-07</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
 </urlset>
