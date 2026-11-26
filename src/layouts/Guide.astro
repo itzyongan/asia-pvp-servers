@@ -1,0 +1,16 @@
+---
+import "../styles/guide.css";
+import { guides, type Guide } from "../data/guides";
+const { guide } = Astro.props as { guide: Guide };
+const site = "https://asia-pvp-servers.vercel.app";
+const url = `${site}/${guide.slug}/`;
+const ld = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: guide.title,
+  description: guide.description,
+  url,
+  isPartOf: { "@type": "WebSite", name: "AS Servers", url: `${site}/` },
+});
+---
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{guide.title}</title><meta name="description" content={guide.description}><meta name="robots" content="index,follow,max-image-preview:large"><link rel="canonical" href={url}><meta property="og:type" content="website"><meta property="og:site_name" content="AS Servers"><meta property="og:url" content={url}><meta property="og:title" content={guide.title}><meta property="og:description" content={guide.description}><meta property="og:image" content={`${site}/og-image.png`}><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content={guide.title}><meta name="twitter:description" content={guide.description}><meta name="twitter:image" content={`${site}/og-image.png`}><script type="application/ld+json" set:html={ld}></script></head><body><div class="top"></div><main><p><a href="/">AS Servers</a> / {guide.h1}</p><h1>{guide.h1}</h1><Fragment set:html={guide.body} /><nav class="links" aria-label="Related guides">{guides.map((g) => <a href={`/${g.slug}/`}>{g.label}</a>)}</nav><p><small>AS Servers is a community-maintained directory. Server status, locations and supported modes may change; confirm details with each server before joining.</small></p></main></body></html>
