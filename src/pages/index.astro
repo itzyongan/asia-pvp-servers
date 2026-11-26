@@ -1,0 +1,204 @@
+---
+import { readFileSync } from "node:fs";
+import Base from "../layouts/Base.astro";
+import StaticList from "../components/StaticList.astro";
+import { parse } from "../lib/parse";
+import "../styles/global.css";
+
+const servers = parse(readFileSync("README.md", "utf8"));
+if (!servers.length) throw new Error("README.md produced no servers");
+
+const ldSite = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://asia-pvp-servers.vercel.app/#website",
+      "url": "https://asia-pvp-servers.vercel.app/",
+      "name": "AS Servers",
+      "alternateName": ["AS Servers Minecraft PvP", "Asia PvP Servers"],
+      "description": "A list of Minecraft PvP servers in Asia for Duels, FFA and Sandbox.",
+      "inLanguage": "en",
+      "publisher": {"@type": "Person", "name": "itzyongan", "url": "https://linktr.ee/itzyongan"}
+    },
+    {
+      "@type": "CollectionPage",
+      "@id": "https://asia-pvp-servers.vercel.app/#page",
+      "url": "https://asia-pvp-servers.vercel.app/",
+      "name": "Asia Minecraft PvP Servers (1.9+)",
+      "isPartOf": {"@id": "https://asia-pvp-servers.vercel.app/#website"},
+      "about": {"@type": "Thing", "name": "Minecraft PvP servers in Asia"},
+      "inLanguage": "en"
+    }
+  ]
+};
+const ldList = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Asia Minecraft PvP servers",
+  numberOfItems: servers.length,
+  itemListElement: servers.map((s, i) => ({ "@type": "ListItem", position: i + 1, name: s.ip })),
+}).replace(/</g, "\\u003c");
+const data = JSON.stringify(servers).replace(/</g, "\\u003c");
+---
+<Base>
+<Fragment slot="head">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Primary SEO -->
+<title>Asia Minecraft PvP Servers (1.9+) | Duels, FFA &amp; Sandbox – AS Servers</title>
+<meta name="description" content="Find Minecraft PvP servers in Asia for 1.9+ combat. Compare Singapore, South Korea and India servers for Duels, FFA and Sandbox, with live player counts.">
+<meta name="keywords" content="asia minecraft pvp servers, minecraft pvp server list, singapore minecraft servers, minecraft duels server, minecraft crystal pvp, low ping minecraft servers, cracked minecraft pvp servers">
+<meta name="author" content="itzyongan">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<link rel="canonical" href="https://asia-pvp-servers.vercel.app/">
+
+<!-- Appearance -->
+<meta name="theme-color" content="#1a1d22">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon-48x48.png" type="image/png" sizes="48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="application-name" content="AS Servers">
+<meta name="apple-mobile-web-app-title" content="AS Servers">
+
+<!-- Open Graph / Twitter -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AS Servers">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://asia-pvp-servers.vercel.app/">
+<meta property="og:title" content="Asia Minecraft PvP Servers (1.9+) | Duels, FFA &amp; Sandbox">
+<meta property="og:description" content="Find Minecraft PvP servers in Asia for Duels, FFA and Sandbox, with live player counts and server IPs.">
+<meta property="og:image" content="https://asia-pvp-servers.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="AS Servers: Asia Minecraft PvP server list">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Asia Minecraft PvP Servers (1.9+) | Duels, FFA &amp; Sandbox">
+<meta name="twitter:description" content="Find Minecraft PvP servers in Asia for Duels, FFA and Sandbox, with live player counts and server IPs.">
+<meta name="twitter:image" content="https://asia-pvp-servers.vercel.app/og-image.png">
+
+<!-- Structured data -->
+<script type="application/ld+json" set:html={JSON.stringify(ldSite)} />
+<script type="application/ld+json" id="ld-list" set:html={ldList} />
+
+<!-- Performance -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.mcstatus.io" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;700&family=Rubik:wght@700&display=swap"></noscript>
+
+</Fragment>
+<div class="grass" aria-hidden="true"></div>
+
+<header class="hero">
+  <a class="statuslink" href="https://stats.uptimerobot.com/qyZBlkRGF3" target="_blank" rel="noopener">Status page</a>
+  <div class="wrap">
+    <h1>Minecraft <em>PvP</em><br>servers in Asia</h1>
+    <p>Low-ping 1.9+ practice servers across Asia. Duels, free-for-all and sandbox with Swords, Crystals, Netherite, Boxing and more.</p>
+    <div class="cta">
+      <a class="btn" href="#servers" id="browse">Browse servers</a>
+      <a class="btn alt" href="https://discord.gg/TTAgYjXmkh" target="_blank" rel="noopener">Join Discord</a>
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<div class="bar" id="servers">
+  <div class="wrap">
+    <div class="tabs" role="group" aria-label="Filter by game mode" id="tabs">
+      <button class="tab" data-mode="all" aria-pressed="true">All</button>
+      <button class="tab" data-mode="duels" aria-pressed="false">Duels</button>
+      <button class="tab" data-mode="ffa" aria-pressed="false">FFA</button>
+      <button class="tab" data-mode="sandbox" aria-pressed="false">Sandbox</button>
+    </div>
+    <div class="tools">
+      <input type="search" id="q" placeholder="Search servers" aria-label="Search servers">
+      <select id="region" aria-label="Filter by region">
+        <option value="all">All regions</option>
+      </select>
+      <select id="sort" aria-label="Sort servers">
+        <option value="default">Default order</option>
+        <option value="players">Most players</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<main class="wrap" id="out"><StaticList servers={servers} /><noscript><div class="empty">Live status and filters need JavaScript. The server list above remains available, or <a href="https://github.com/itzyongan/asia-pvp-servers">read it on GitHub</a>.</div></noscript></main>
+
+<section class="wrap about" aria-labelledby="about-title">
+  <h2 id="about-title">About this Asia Minecraft PvP server list</h2>
+  <p>AS Servers is a hand-picked list of Minecraft PvP servers hosted in Asia, mostly in Singapore, with more in South Korea and India. Every server supports Minecraft 1.9+ combat and is sorted by the game modes it offers: <strong>Duels</strong>, <strong>FFA</strong> (free-for-all) and <strong>Sandbox</strong>. Player counts update live each time you open the page.</p>
+  <p>Playing on a server close to you means lower ping, which matters most in sword, crystal and Netherite PvP. Click any server to see its alternate routes, or press <em>Copy IP</em> and paste it into the multiplayer menu.</p>
+
+  <h3>Frequently asked questions</h3>
+  <div class="faq">
+    <details>
+      <summary>What is the best Minecraft PvP server in Asia?</summary>
+      <p>Servers marked with a star are our top picks, chosen for their Asia-based hosting and active player base. The best one for you depends on your location and the mode you want, so use the mode and region filters above.</p>
+    </details>
+    <details>
+      <summary>What is the difference between Premium and Cracked servers?</summary>
+      <p>Premium servers require a paid Minecraft Java account. Cracked servers are also open to non-premium accounts.</p>
+    </details>
+    <details>
+      <summary>Which Minecraft version do these servers use?</summary>
+      <p>The list focuses on 1.9+ servers with modern PvP such as crystals, Netherite and shields. Check each server's own page for its exact supported versions.</p>
+    </details>
+    <details>
+      <summary>How do I join a server from the list?</summary>
+      <p>Click <em>Copy IP</em> on a server, open Minecraft Java Edition, go to Multiplayer, choose Add Server and paste the address.</p>
+    </details>
+    <details>
+      <summary>How can I add my server to the list?</summary>
+      <p>Open a pull request on the <a href="https://github.com/itzyongan/asia-pvp-servers" target="_blank" rel="noopener">GitHub repository</a> and add your server to the README table, or ask in the Discord community.</p>
+    </details>
+  </div>
+</section>
+
+<section class="wrap" aria-label="Get involved">
+  <div class="cards">
+    <div class="card">
+      <h2>Suggest a server</h2>
+      <p>Know a good Asia PvP server that is missing? Open a pull request and add it to the list.</p>
+      <a class="btn" href="https://github.com/itzyongan/asia-pvp-servers" target="_blank" rel="noopener">Open GitHub repo</a>
+    </div>
+    <div class="card">
+      <h2>Need help?</h2>
+      <p>Questions, broken IPs or server ideas? Ask in the Discord community.</p>
+      <a class="btn alt" href="https://discord.gg/TTAgYjXmkh" target="_blank" rel="noopener">Join Discord</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Made by <a href="https://linktr.ee/itzyongan" target="_blank" rel="noopener">itzyongan</a>. Not affiliated with Mojang or Microsoft.</span>
+    <span>Player counts from <a href="https://mcstatus.io" target="_blank" rel="noopener">mcstatus.io</a> and <a href="https://mcsrvstat.us" target="_blank" rel="noopener">mcsrvstat.us</a>.</span>
+  </div>
+</footer>
+
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <div class="dh">
+    <div class="icon" id="dlg-icon" aria-hidden="true"></div>
+    <div class="dt"><h2 id="dlg-title"></h2><div class="ds" id="dlg-sub"></div></div>
+    <button class="btn alt x" id="dlg-close" type="button" aria-label="Close">✕</button>
+  </div>
+  <div class="db" id="dlg-body"></div>
+  <div class="df">
+    <div class="fl">
+      <a id="dlg-ext" href="#" target="_blank" rel="noopener">Server debug</a>
+      <a id="dlg-geo" href="#" target="_blank" rel="noopener">IP lookup</a>
+      <a id="dlg-nmc" href="#" target="_blank" rel="noopener">View on NameMC</a>
+    </div>
+    <button class="btn copy" id="dlg-copy" type="button">Copy IP</button>
+  </div>
+</dialog>
+
+<script type="application/json" id="servers-data" set:html={data} />
+<script>import "../scripts/main";</script>
+</Base>

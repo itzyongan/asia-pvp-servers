@@ -1,0 +1,39 @@
+---
+// Build-time list for crawlers and no-JS visitors. The client replaces it on load.
+import type { Server } from "../lib/parse";
+const { servers } = Astro.props as { servers: Server[] };
+const region = new Intl.DisplayNames(["en"], { type: "region" });
+const modes = (s: Server) =>
+  [["Duels", s.duels], ["FFA", s.ffa], ["Sandbox", s.sandbox]]
+    .filter(([, v]) => v === 1 || v === "l")
+    .map(([n]) => n)
+    .join(", ");
+const groups = [
+  { type: "premium", title: "Premium servers", sub: "Require a paid Minecraft account.", label: "Premium" },
+  { type: "cracked", title: "Cracked servers", sub: "Also accept non-premium Minecraft accounts.", label: "Cracked" },
+] as const;
+---
+<section data-prerendered aria-label="Minecraft PvP servers in Asia">
+  {groups.map((g) => (
+    <Fragment>
+      <h2>{g.title}</h2>
+      <p class="sub">{g.sub}</p>
+      <ul class="list">
+        {servers.filter((s) => s.type === g.type).map((s) => (
+          <li class="srv">
+            <div class="icon" aria-hidden="true">⚔</div>
+            <div>
+              <strong>{s.ip}</strong>
+              <div class="meta">
+                <span>{region.of(s.region)}</span>
+                <span>{modes(s)}</span>
+                {s.top && <span>★ Top pick</span>}
+              </div>
+            </div>
+            <span class="chip">{g.label}</span>
+          </li>
+        ))}
+      </ul>
+    </Fragment>
+  ))}
+</section>

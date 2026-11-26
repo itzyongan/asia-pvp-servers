@@ -1,0 +1,6 @@
+node_modules
+.npm/
+npm-debug.log*
+dist
+.astro
+.vercel
